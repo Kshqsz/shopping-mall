@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.usts.cs2022.mapper.ProductMapper">
+
+    <insert id="add">
+        insert into product(name, price, merchant_id, category_id, video, image, source, status, description, create_time, update_time )
+        values (#{name}, #{price}, #{merchantId}, #{categoryId}, #{video}, #{image}, #{source}, #{status}, #{description}, #{createTime}, #{updateTime})
+    </insert>
+    <update id="update">
+        update product
+        <set>
+            <if test="name != null"> name = #{name}, </if>
+            <if test="price != null"> price = #{price },</if>
+            <if test="categoryId != null"> category_id = #{categoryId},</if>
+            <if test="video != null"> video = #{video},</if>
+            <if test="image != null"> image = #{image},</if>
+            <if test="source != null"> source = #{source },</if>
+            <if test="description != null"> description = #{description},</if>
+            <if test="true"> update_time = now(),</if>
+            <if test="true"> status = 0 </if>
+        </set>
+        <where>
+            id = #{id}
+        </where>
+    </update>
+    <select id="search" resultType="cn.edu.usts.cs2022.pojo.po.Product">
+        select * from product
+        left join category on product.category_id = category.id
+        where product.name like concat('%', #{searchInfo}, '%')
+            or category.name like concat('%', #{searchInfo}, '%')
+    </select>
+    <select id="getByIds" resultType="cn.edu.usts.cs2022.pojo.po.Product">
+        select * from product where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+</mapper>

@@ -1,0 +1,215 @@
+<template>  
+  <div class="order-management-container">  
+    <h2>订单管理</h2>  
+    <div class="filters">  
+      <div class="filter-item">  
+        <span>订单编号:</span>  
+        <el-input v-model="orderNo" placeholder="输入订单编号" />  
+        <el-button type="primary" @click="searchOrders">查询</el-button>  
+      </div>  
+    </div>  
+    <el-table :data="paginatedOrders" style="width: 100%">  
+      <el-table-column prop="id" label="订单ID" width="120"></el-table-column>  
+      <el-table-column prop="orderNumber" label="订单编号" width="180"></el-table-column>  
+      <el-table-column prop="productName" label="交易商品" width="180"></el-table-column>  
+      <!-- <el-table-column prop="productLink" label="商品链接" width="180">  
+        <template #default="scope">  
+          <a :href="scope.row.productLink" target="_blank">{{ scope.row.productLink }}</a>  
+        </template>  
+      </el-table-column>   -->
+      <el-table-column prop="createTime" label="交易时间" width="180"></el-table-column>  
+      <el-table-column prop="userName" label="买家" width="120"></el-table-column>  
+      <el-table-column prop="merchantName" label="卖家" width="120"></el-table-column>  
+      <el-table-column prop="status" label="订单状态" width="120">  
+        <template #default="scope">  
+          <el-tag :type="getStatusTagType(scope.row.status)">{{ getStatusText(scope.row.status) }}</el-tag>  
+        </template>  
+      </el-table-column>  
+    </el-table>  
+    <div class="pagination">  
+      <el-pagination  
+        v-model:current-page="currentPage"  
+        v-model:page-size="pageSize"  
+        :total="filteredOrders.length"  
+        layout="prev, pager, next"  
+        @current-change="handlePageChange"  
+      />  
+    </div>  
+  </div>  
+</template>  
+
+<script setup>  
+import {  computed ,onMounted,ref} from 'vue';  
+import { getAllOrder } from '@/api/order';
+import { getAllMerchant } from '@/api/merchant';
+import { getAllProduct } from '@/api/product';
+import { admingetalluser } from '@/api/user';
+//获取订单列表
+const orderList = ref([]);  
+const merchantMap = ref([])
+const productMap = ref([])
+const productMap2 = ref([])
+const userMap = ref([])
+const getOrderList = async () =>{
+  try {  
+    const res = await getAllOrder();  
+    console.log('获取订单成功:', res.data.data);  
+    orderList.value.splice(0, orderList.value.length, ...res.data.data);
+    const ordersWithNames = orderList.value.map(order => {  
+      return {  
+        ...order,    
+        merchantName: merchantMap[order.merchantId] || '未知商家' ,
+        productName: productMap[order.productId] || '未知商品',
+        productLink: productMap2[order.productId],
+        userName:userMap[order.userId]
+      };  
+    });
+    orderList.value.splice(0, orderList.value.length, ...ordersWithNames);
+  } catch (error) {  
+    console.error('获取用户失败:', error);  
+  }  
+}
+//获取商家列表
+const getAllMerchants = async () => {
+  try {  
+    const res = await getAllMerchant();  
+    console.log('获取商家成功:', res.data.data);  
+    // 确保响应式  
+    
+    merchantMap.value.splice(0, merchantMap.value.length, ...res.data.data);
+    res.data.data.forEach(merchant => {  
+      merchantMap[merchant.id] = merchant.username;   
+    });     
+  
+  
+  } catch (error) {  
+    console.error('获取用户失败:', error);  
+  }  
+}
+//获取产品列表
+const getAllProductList = async () => {  
+  try {  
+    const res = await getAllProduct();  
+    console.log('获取商品列表成功:', res.data.data);  
+
+    productMap.value.splice(0, productMap.value.length, ...res.data.data);
+    res.data.data.forEach(product => {  
+      productMap[product.id] = product.name; 
+      
+    });
+    productMap2.value.splice(0, productMap2.value.length, ...res.data.data);
+    res.data.data.forEach(product => {  
+      productMap2[product.id] = product.source;  
+    });     
+  } catch (error) {  
+    console.error('获取商品列表失败:', error);  
+  }  
+};
+//获取用户列表
+const getAllUser = async () => {  
+  try {  
+    const res = await admingetalluser();  
+    console.log('获取用户成功:', res.data.data);   
+    userMap.value.splice(0, userMap.value.length, ...res.data.data);  
+    res.data.data.forEach(user => {  
+      userMap[user.id] = user.username;   
+    });     
+  } catch (error) {  
+    console.error('获取用户失败:', error);  
+  }  
+}; 
+
+const currentPage = ref(1);  
+const pageSize = ref(10);  
+const orderNo = ref('');  
+
+const filteredOrders = computed(() => {  
+  let orders = [...orderList.value];  
+  if (orderNo.value) {  
+    orders = orders.filter((order) =>  
+      order.orderNumber.toLowerCase().includes(orderNo.value.toLowerCase())  
+    );  
+  }  
+  return orders;  
+});  
+const paginatedOrders = computed(() => {  
+  const start = (currentPage.value - 1) * pageSize.value;  
+  const end = start + pageSize.value;  
+  return filteredOrders.value.slice(start, end);  
+});  
+const searchOrders = () => {  
+  currentPage.value = 1;  
+};  
+
+const handlePageChange = () => {  
+  // 处理分页切换  
+};  
+
+
+//处理状态显示
+const getStatusTagType = (status) => {  
+  switch (status) {  
+    case "1":  
+      return 'success';  
+    case 0:  
+      return 'warning';  
+    case -1:  
+      return 'danger';  
+    default:  
+      return '';  
+  }  
+};  
+const getStatusText = (status) => {  
+    switch (status) {  
+      case 1:  
+        return '已完成';  
+      case 0:  
+        return '未支付';  
+      case -1:  
+        return '已取消';  
+      default:  
+        return '未知状态'; // 可选的默认状态  
+    }  
+  }  
+
+
+
+onMounted(() => {  
+  getAllProductList()
+  .then(getAllMerchants)
+  .then(getAllUser)
+  .then(getOrderList)
+  
+  
+  
+});  
+</script>  
+
+<style scoped>  
+.order-management-container {  
+  padding: 20px;  
+}  
+.filters {  
+  display: flex;  
+  justify-content: space-between;  
+  align-items: center;  
+  margin-bottom: 20px;  
+}  
+.filter-item {  
+  display: flex;  
+  align-items: center;  
+}  
+.filter-item span {  
+  margin-right: 10px;  
+  width: 120px;  
+}  
+.filter-item .el-input,  
+.filter-item .el-select {  
+  margin-right: 10px;  
+}  
+.pagination {  
+  display: flex;  
+  justify-content: center;  
+  margin-top: 20px;  
+}  
+</style>

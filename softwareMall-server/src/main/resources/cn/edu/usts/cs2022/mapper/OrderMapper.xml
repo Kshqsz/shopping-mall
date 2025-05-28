@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.usts.cs2022.mapper.OrderMapper">
+
+    <!-- 插入订单 -->
+    <insert id="add" parameterType="cn.edu.usts.cs2022.pojo.po.Order" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `order` (order_number, user_id, product_id, merchant_id, status, create_time)
+        VALUES (#{orderNumber}, #{userId}, #{productId}, #{merchantId}, #{status}, #{createTime});
+    </insert>
+
+    <!-- 查询插入后的订单信息 -->
+    <select id="getById" parameterType="int" resultType="cn.edu.usts.cs2022.pojo.po.Order">
+        SELECT * FROM `order` WHERE id = #{id};
+    </select>
+
+    <select id="selectOrderWithPrice" resultType="cn.edu.usts.cs2022.pojo.vo.OrderVO">
+        select `order`.*,product.price from `order` left outer join product on order.product_id = product.id
+    </select>
+
+</mapper>
