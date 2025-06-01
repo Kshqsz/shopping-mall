@@ -16,10 +16,6 @@ const navItems = ref([
   { name: "设计工具", path: "", isSearch: true },
   { name: "办公与协作", path: "", isSearch: true },
 ]);
-// const userStore = useUserStore();
-// if (userStore.token != '') {
-//   navItems.value.push("个人中心")
-// }
 const router = useRouter()
 const userStore = useUserStore()
 const username = userStore.username
@@ -68,7 +64,6 @@ const gridData = [
       <el-table-column property="from" label="From" />
       <el-table-column property="email" label="Contact us"></el-table-column>
     </el-table>
-
     <!-- 指导老师信息 -->
     <div class="mentor-info">
       <span>
@@ -87,17 +82,16 @@ const gridData = [
   <div class="page-layout">
     <!-- 顶部导航栏 -->
     <el-header height="60px" class="top-nav">
-      <!-- Logo -->
-      <img src="../../assets/img/logo.png" alt="" width="90px" style="padding-left: 120px; padding-top: 35px; cursor: pointer;" @click="goToHome">
-      <h2 style="padding-top: 20px; padding-right: 20px;">软件商城</h2>
-      <!-- <h1 class="title" @click="goToHome">SoftWare</h1> -->
-      <!-- 导航文字居中 -->
+      <div class="nav-left">
+        <img src="../../assets/img/logo.png" alt="" width="60px" style="cursor: pointer;" @click="goToHome">
+        <h2 class="mall-title">软件商城</h2>
+      </div>
       <div class="nav-items">
         <span v-for="(item, index) in navItems" :key="index" @click="handleNavClick(item)">{{ item.name }}</span>
         <span @click="dialogTableVisible = true;">关于我们</span>
       </div>
-      <div  class="dropdown-container">
-        <el-dropdown class="welcome" >
+      <div class="dropdown-container">
+        <el-dropdown class="welcome">
           <span> {{ welcome }}</span>
         </el-dropdown>
         <el-dropdown class="welcome">
@@ -105,9 +99,8 @@ const gridData = [
         </el-dropdown>
         <el-dropdown class="user-dropdown">
           <span>
-            <el-avatar :src="userStore.user.avatar" :size="55">
-            </el-avatar>
-           <el-icon>
+            <el-avatar :src="userStore.user.avatar" :size="55"></el-avatar>
+            <el-icon>
               <arrow-down />
             </el-icon>
           </span>
@@ -119,7 +112,6 @@ const gridData = [
           </template>
         </el-dropdown>
       </div>
-      <!-- 搜索框 -->
       <el-input
         v-model="searchInfo"
         placeholder="搜索商品"
@@ -129,10 +121,6 @@ const gridData = [
         size="small"
       ></el-input>
     </el-header>
-    <!-- 在顶部导航栏下方添加文字 -->
-        <div class="software-center">
-          <span>苏科大软件工程中心</span>
-        </div>
     <div>
       <router-view></router-view>
     </div>
@@ -141,29 +129,46 @@ const gridData = [
 
 <style scoped>
 .top-nav {
+  display: flex;
   align-items: center;
+  width: 100%;
+  background-color: #fff;
   padding: 0 20px;
-  background-color: #ffffff;
-  margin-bottom: 10px;
+  min-width: 1200px;
+  box-sizing: border-box;
 }
 
-.title {
-  padding-top: 15px;
-  margin-left: 120px;
-  cursor: pointer;
+.nav-left {
+  padding-left: 120px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mall-title {
+  font-size: 22px;
+  font-weight: bold;
 }
 
 .nav-items {
-  padding-left: 100px;
-  padding-top: 30px;
   display: flex;
-  gap: 15px;
-  font-size: 18px;
-  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  font-size: 16px;
   cursor: pointer;
+  flex: 1;
+  justify-content: center;
+  min-width: 400px;
 }
+
+.dropdown-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 0;
+}
+
 .welcome span {
-  padding-top: 30px;
   cursor: default;
   display: inline-flex;
   align-items: center;
@@ -172,15 +177,8 @@ const gridData = [
   box-shadow: none !important;
   margin-right: 10px; 
 }
-.search-box {
-  margin-top: 30px;
-  margin-right: 120px;
-  width: 250px;
-  height: 45px;
-}
-/* 去除个人中心按钮的边框和轮廓 */
+
 .user-dropdown span {
-  margin-top: 10px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -189,23 +187,15 @@ const gridData = [
   box-shadow: none !important;
   margin-right: 10px;
 }
-.el-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+
+.search-box {
+  margin-left: 20px;
+  width: 250px;
+  height: 45px;
+  margin-top: 0;
+  margin-right: 0;
 }
 
-.dropdown-container {
-  display: flex; /* 将三个下拉框包裹在一个 flex 容器内 */
-  align-items: center;
-  gap: 5px; /* 控制间距 */
-  margin-left: 0;
-}
-
-.avatar-icon {
-  margin-right: 5px; /* 调整头像和文字间距 */
-}
 .mentor-info {
   margin-right: 100px;
   margin-top: 10px;
@@ -216,11 +206,6 @@ const gridData = [
 .director {
   color: #0073e6;
   cursor: pointer;
-  text-decoration: none; /* 取消下划线 */
-}
-.software-center {
-  text-align: left;
-  font-size: 14px;
-  padding-left: 230px;
+  text-decoration: none;
 }
 </style>
