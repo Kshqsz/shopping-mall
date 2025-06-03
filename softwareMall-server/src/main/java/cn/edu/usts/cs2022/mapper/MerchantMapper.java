@@ -2,7 +2,7 @@ package cn.edu.usts.cs2022.mapper;
 
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
 import cn.edu.usts.cs2022.pojo.po.Merchant;
-import cn.edu.usts.cs2022.pojo.vo.MerchantVO;
+import cn.edu.usts.cs2022.pojo.vo.MerchantVo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -31,7 +31,7 @@ public interface MerchantMapper {
     @Update("update merchant set status = #{status} where id = #{id}")
     void changeStatus(Merchant merchant);
 
-    MerchantVO getByProductId(@Param("id") Integer id);
+    MerchantVo getByProductId(@Param("id") Integer id);
 
     @Select("select * from merchant where id = #{id}")
     Merchant getById(@Param("id") Integer id);

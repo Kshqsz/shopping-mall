@@ -1,9 +1,9 @@
 import request from '@/utils/request.js'
 
-export const categoryAddService = ({name}) => {
-    return request.post("/category/add", {name});
+export const firstCategoryList = () => {
+    return request.get("/category/firstList");
 }
 
-export const categoryGetAllService = () => {
-    return request.get("/category/all");
+export const secondCategoryList = (firstId) => {
+    return request.get(`/category/second/${firstId}`)
 }

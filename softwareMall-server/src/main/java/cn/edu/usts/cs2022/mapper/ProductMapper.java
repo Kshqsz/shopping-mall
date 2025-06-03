@@ -1,10 +1,8 @@
 package cn.edu.usts.cs2022.mapper;
 
+import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
 import cn.edu.usts.cs2022.pojo.po.Product;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -33,4 +31,11 @@ public interface ProductMapper {
      */
     @Update("update product set status = #{status} where id = #{id}")
     void updateStatus(Product product);
+
+    @Insert("insert into product (name,merchant_id,first_category_id,first_category_name,second_category_id,second_category_name," +
+            "video,image,description,create_time,update_time,low_price) " +
+            "values (#{name},#{merchantId},#{level1Category},#{level1CategoryName},#{level2Category},#{level2CategoryName}," +
+            "#{video},#{mainImage},#{description},NOW(),NOW(),#{price})")
+    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+    void insertProduct(ProductDTO productDTO);
 }

@@ -2,8 +2,11 @@ package cn.edu.usts.cs2022.controller;
 
 
 import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
+import cn.edu.usts.cs2022.pojo.po.PageResult;
 import cn.edu.usts.cs2022.pojo.po.Product;
 import cn.edu.usts.cs2022.pojo.po.Result;
+import cn.edu.usts.cs2022.pojo.query.ProductSimpleQuery;
+import cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo;
 import cn.edu.usts.cs2022.service.ProductService;
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +23,7 @@ public class ProductController {
 
     @PostMapping("/add")
     public Result add(@RequestBody ProductDTO productDTO) {
+        System.out.println(productDTO.toString());
         productService.add(productDTO);
         return Result.success();
     }
@@ -72,6 +76,13 @@ public class ProductController {
     public Result updateStatus(@RequestBody Product product) {
         productService.updateStatus(product);
         return Result.success();
+    }
+
+    //根据条件查询商品简略信息
+    @PostMapping("/fetch")
+    public PageResult<ProductSimpleVo> selectSimpleProductList(@RequestBody ProductSimpleQuery productSimpleQuery) {
+        System.out.println(productSimpleQuery.toString());
+        return null;
     }
 
 }

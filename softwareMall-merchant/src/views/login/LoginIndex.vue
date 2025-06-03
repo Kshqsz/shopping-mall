@@ -24,7 +24,7 @@ const merchantStore = useMerchantStore();
       try {  
         // 在这里添加注册的逻辑,例如调用后端 API 进行注册  
         await merchantRegisterService(registerForm.value)
-        ElMessage.success("注册成功~")
+        
         showRegisterModal.value = false;  
       } catch (error) {  
         console.error('注册失败:', error);  
@@ -47,7 +47,7 @@ const handleLogin = async () => {
   merchantStore.setToken(res.data.data.token) 
   merchantStore.setMerchant(res.data.data.merchant)
   console.log(merchantStore.merchant)
-  ElMessage.success("登录成功");
+  
   router.push('/home'); 
 };  
 </script>  
@@ -55,7 +55,7 @@ const handleLogin = async () => {
 <template>  
   <div class="login-container">  
     <el-card class="login-card">  
-      <h2>软件商城商家登录</h2>  
+      <h2>商品商城商户登录</h2>  
       <el-form :model="form" :rules="rules" ref="formRef" label-position="top" status-icon>  
         <el-form-item label="用户名" prop="username">  
           <el-input v-model="form.username" placeholder="请输入用户名"></el-input>  

@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MerchantVO {
+public class MerchantVo {
     private Integer id;
 
     private String username;
 
     private String avatar;
+
 }

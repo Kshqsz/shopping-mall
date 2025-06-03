@@ -1,10 +1,9 @@
 package cn.edu.usts.cs2022.service.impl;
 
 import cn.edu.usts.cs2022.mapper.MerchantMapper;
-import cn.edu.usts.cs2022.mapper.ProductMapper;
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
 import cn.edu.usts.cs2022.pojo.po.Merchant;
-import cn.edu.usts.cs2022.pojo.vo.MerchantVO;
+import cn.edu.usts.cs2022.pojo.vo.MerchantVo;
 import cn.edu.usts.cs2022.service.MerchantService;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +58,7 @@ public class MerchantServiceImpl implements MerchantService {
     }
 
     @Override
-    public MerchantVO getByProductId(Integer id) {
+    public MerchantVo getByProductId(Integer id) {
         return merchantMapper.getByProductId(id);
     }
 

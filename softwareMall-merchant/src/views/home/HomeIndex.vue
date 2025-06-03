@@ -34,13 +34,13 @@ const handleLogout = () => {
       <div class="logo">  
         <img src="../../assets/img/logo.png" alt="Logo" />  
       </div>  
-      <div class="title">软件管理平台</div>  
+      <div class="title">店铺管理平台</div>  
       <div class="profile">  
         <div class="admin-avatar" @click="showLogoutMenu = !showLogoutMenu">  
           商家
         </div>  
         <div v-if="showLogoutMenu" class="logout-menu">  
-          <button @click="handleLogout">退出登录</button>  
+          <button @click="handleLogout" style="width: 70px;">退出登录</button>  
         </div>  
       </div>  
     </header>  

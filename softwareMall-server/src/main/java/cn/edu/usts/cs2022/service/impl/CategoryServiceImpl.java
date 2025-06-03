@@ -2,6 +2,7 @@ package cn.edu.usts.cs2022.service.impl;
 
 import cn.edu.usts.cs2022.mapper.CategoryMapper;
 import cn.edu.usts.cs2022.pojo.po.Category;
+import cn.edu.usts.cs2022.pojo.vo.CategoryVo;
 import cn.edu.usts.cs2022.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -67,5 +68,17 @@ public class CategoryServiceImpl implements CategoryService {
     public String getCategoryById(Integer id) {
         String name = categoryMapper.selectById(id);
         return name;
+    }
+
+    //获取一级分类
+    @Override
+    public List<CategoryVo> getFirstCategoryList() {
+        return categoryMapper.getFirstCategoryList();
+    }
+
+    // 获取二级分类
+    @Override
+    public List<CategoryVo> getSecondCategoryList(Integer firstId) {
+        return categoryMapper.getSecondCategoryList(firstId);
     }
 }

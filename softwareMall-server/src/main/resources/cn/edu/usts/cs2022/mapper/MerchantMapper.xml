@@ -21,7 +21,7 @@
         </where>
     </update>
 
-    <select id="getByProductId" resultType="cn.edu.usts.cs2022.pojo.vo.MerchantVO">
+    <select id="getByProductId" resultType="cn.edu.usts.cs2022.pojo.vo.MerchantVo">
         select merchant.id, merchant.username, merchant.avatar
         from merchant
                  join product on merchant.id = product.merchant_id

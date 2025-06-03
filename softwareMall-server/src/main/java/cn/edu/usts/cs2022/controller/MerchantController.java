@@ -3,7 +3,7 @@ package cn.edu.usts.cs2022.controller;
 import cn.edu.usts.cs2022.pojo.dto.*;
 import cn.edu.usts.cs2022.pojo.po.Merchant;
 import cn.edu.usts.cs2022.pojo.po.Result;
-import cn.edu.usts.cs2022.pojo.vo.MerchantVO;
+import cn.edu.usts.cs2022.pojo.vo.MerchantVo;
 import cn.edu.usts.cs2022.service.MerchantService;
 import cn.edu.usts.cs2022.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -91,8 +91,8 @@ public class MerchantController {
 
 
     @GetMapping("/getByProductId/{id}")
-    public Result<MerchantVO> getByProductId(@PathVariable("id") Integer id) {
-        MerchantVO merchantVO = merchantService.getByProductId(id);
+    public Result<MerchantVo> getByProductId(@PathVariable("id") Integer id) {
+        MerchantVo merchantVO = merchantService.getByProductId(id);
         return Result.success(merchantVO);
     }
 
