@@ -1,0 +1,10 @@
+package cn.edu.usts.cs2022.pojo.vo;
+
+import lombok.Data;
+
+@Data
+public class ProductStatisticsVo {
+    private Integer total;
+    private Integer onSale;
+    private Integer  pending;
+}

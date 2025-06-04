@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class ProductSimpleQuery {
+    private Integer merchant_id;
     private String name;
     private Integer level1Category;
     private Integer level2Category;

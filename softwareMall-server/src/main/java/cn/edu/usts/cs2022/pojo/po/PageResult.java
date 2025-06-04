@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class PageResult<T> {
     // 总记录数
-    private Integer total;
+    private Long total;
     // 分页数据
     private List<T> list;
 }

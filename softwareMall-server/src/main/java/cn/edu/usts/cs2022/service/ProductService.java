@@ -1,7 +1,13 @@
 package cn.edu.usts.cs2022.service;
 
 import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
+import cn.edu.usts.cs2022.pojo.dto.StatusDto;
+import cn.edu.usts.cs2022.pojo.po.PageResult;
 import cn.edu.usts.cs2022.pojo.po.Product;
+import cn.edu.usts.cs2022.pojo.query.ProductSimpleQuery;
+import cn.edu.usts.cs2022.pojo.vo.ProductDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.ProductEditDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -25,5 +31,13 @@ public interface ProductService {
      * 修改商品状态
      * @param product
      */
-    void updateStatus(Product product);
+    void updateStatus(StatusDto product);
+
+    PageResult<ProductSimpleVo> selectSimpleProductList(ProductSimpleQuery productSimpleQuery);
+
+    ProductDetailVo selectDetailProductById(Integer id);
+
+    ProductEditDetailVo selectEditDetailProduct(Integer productId);
+
+    void updateProduct(ProductDTO productDTO);
 }

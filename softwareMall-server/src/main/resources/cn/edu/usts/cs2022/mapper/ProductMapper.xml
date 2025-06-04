@@ -38,4 +38,26 @@
             #{id}
         </foreach>
     </select>
+
+    <!--查询简易商品列表-->
+    <select id="selectSimpleProductList" resultType="cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo">
+        select id,name,low_price,second_category_id,second_category_name,status,total_sales,update_time
+        from product
+        <where>
+            merchant_id = #{merchant_id}
+            <if test="level1Category != '' and level1Category != null">
+            and first_category_id = #{level1Category}
+            </if>
+            <if test="level2Category != '' and level2Category != null">
+            and second_category_id = #{level2Category}
+            </if>
+            <if test="status != null ">
+            and status = #{status}
+            </if>
+            <if test="name != '' and name != null ">
+            and name like concat('%',#{name},'%')
+            </if>
+        </where>
+    </select>
+
 </mapper>
