@@ -306,7 +306,8 @@ import { ref, reactive,computed,nextTick  } from 'vue'
 import { Plus, VideoPlay, Delete, Picture } from '@element-plus/icons-vue'
 import {firstCategoryList,secondCategoryList} from '@/api/category'
 import { uploadFile } from '@/api/file'
-import { addGoods } from '@/api/product' 
+import { addGoods } from '@/api/product'
+import { ElMessage } from 'element-plus' 
 
 const dialogVisible = defineModel()
 const formRef = ref(null)
@@ -565,7 +566,7 @@ const resetForm = async() => {
 
 .main-image-upload {
   width: 100%;
-  height: 280px;
+  height: 480px;
 }
 
 .upload-placeholder {

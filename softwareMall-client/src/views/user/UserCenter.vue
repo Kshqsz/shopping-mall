@@ -2,23 +2,35 @@
 import { watch } from 'vue';
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router';
+import {
+  Document,
+  User,
+  Star,
+  Location,
+  List,
+  Setting
+} from '@element-plus/icons-vue';
 
-// 左侧导航项
+// 左侧导航项 - 添加图标
 const menuItems = ref([
   {
     category: '订单中心',
+    icon: List,
     items: [
-      { label: '我的订单', route: '/orders' },
+      { label: '我的订单', route: '/orders', icon: Document },
     ]
   },
   {
     category: '个人中心',
+    icon: User,
     items: [
-      { label: '我的个人中心', route: '/profile' },
-      { label: '喜欢的商品', route: '/favorites' },
+      { label: '我的个人中心', route: '/profile', icon: Setting },
+      { label: '喜欢的商品', route: '/favorites', icon: Star },
+      { label: '收货地址管理', route: '/address', icon: Location }  
     ]
   }
 ])
+
 const route = useRoute()
 const router = useRouter()
 const currentRoute = ref(route.path)
@@ -41,7 +53,10 @@ const navigateTo = (route) => {
       <!-- 左侧导航 -->
       <el-card class="sidebar" shadow="never">
         <div v-for="(menu, index) in menuItems" :key="index" class="menu-section">
-          <h3>{{ menu.category }}</h3>
+          <div class="category-title">
+            <el-icon class="category-icon"><component :is="menu.icon" /></el-icon>
+            <h3>{{ menu.category }}</h3>
+          </div>
           <ul>
             <li 
               v-for="(item, idx) in menu.items" 
@@ -49,13 +64,17 @@ const navigateTo = (route) => {
               :class="{ active: item.route === currentRoute }"
               @click="navigateTo(item.route)"
             >
-              {{ item.label }}
+              <el-icon class="item-icon"><component :is="item.icon" /></el-icon>
+              <span class="item-label">{{ item.label }}</span>
             </li>
           </ul>
         </div>
       </el-card>
+      
       <!-- 右侧内容 -->
+      <el-card class="content" shadow="never">
         <router-view />
+      </el-card>
     </div>
   </div>
 </template>
@@ -74,52 +93,101 @@ const navigateTo = (route) => {
 }
 
 .sidebar {
-  width: 250px;
+  width: 280px;
   background: #fff;
+  border-radius: 12px;
+  padding: 16px 0;
 }
 
 .menu-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  padding: 0 20px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 8px;
+}
+
+.category-icon {
+  font-size: 18px;
+  color: var(--el-color-primary);
+  margin-right: 8px;
 }
 
 .menu-section h3 {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
 }
 
 .menu-section ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .menu-section li {
-  padding: 5px 0;
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
   cursor: pointer;
   transition: all 0.3s;
+  color: #606266;
+  font-size: 14px;
+  border-left: 3px solid transparent;
+  margin: 4px 0;
 }
 
 .menu-section li:hover {
-  color: #409eff;
+  background-color: #f5f7fa;
+  color: var(--el-color-primary);
+}
+
+.menu-section li.active {
+  background-color: #f0f7ff;
+  color: var(--el-color-primary);
+  border-left-color: var(--el-color-primary);
+  font-weight: 500;
+}
+
+.menu-section li.active .item-icon {
+  color: var(--el-color-primary);
+}
+
+.item-icon {
+  font-size: 16px;
+  margin-right: 10px;
+  color: #909399;
+}
+
+.item-label {
+  flex: 1;
 }
 
 .content {
   flex: 1;
-  padding: 20px;
+  border-radius: 12px;
+  min-height: 70vh;
+  padding: 24px;
+}
+
+/* 响应式调整 */
+@media (max-width: 1200px) {
+  .user-center {
+    padding: 20px;
+  }
   
-}
-.menu-section li {
-  padding: 5px 0;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: #333;
-}
-
-.menu-section li.active {
-  color: #409eff;
-}
-
-.menu-section li:hover {
-  color: #409eff;
+  .user-center-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    margin-bottom: 20px;
+  }
 }
 </style>

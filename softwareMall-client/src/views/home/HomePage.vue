@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { productGetAllService } from '@/api/product'
-import { categoryGetAllService} from '@/api/category'
+import { firstCategoryList, secondCategoryList} from '@/api/category'
 import { useRouter } from 'vue-router';
 
 import home1 from '@/assets/home1.png'
@@ -12,14 +12,25 @@ const detail = (id) => {
   router.push(`/productDetail/${id}`);
 };
 const products = ref([])
-const categories = ref([]);
-const getCategoryName = (id) => {
-  const category = categories.value.find(item => item.id === id)
-  return category ? category.name : "未知分类"
-}
+const firstCategories = ref([]); // 一级分类列表
+const secondCategories = ref({}); // 存储二级分类，key为一级分类ID
+const menuItems = ref([]); // 分类菜单项
+
 onMounted( async() => {
-  const category_res = await categoryGetAllService();
-  categories.value = category_res.data.data;
+  // 获取一级分类
+  const firstRes = await firstCategoryList();
+  firstCategories.value = firstRes.data.data;
+  
+  // 获取所有二级分类
+  for (const category of firstCategories.value) {
+    const secondRes = await secondCategoryList(category.id);
+    secondCategories.value[category.id] = secondRes.data.data;
+  }
+  // 构建菜单项 - 只取前8个一级分类
+  menuItems.value = firstCategories.value.slice(0, 8).map(cat => ({
+    ...cat,
+    children: secondCategories.value[cat.id] || []
+  }));
   const res = await productGetAllService();
   products.value = res.data.data;
   products.value = products.value.filter(item => item.status === 1).slice(0, 5);
@@ -30,46 +41,8 @@ const imageList = ref([
   {id: 2, url: home1},
   {id: 3, url: home2}
 ])
-const menuItems = ref([
-  { id: 0, title: '', subItems: [] },
-  { id: 1, title: '', subItems: [] },
-  { id: 2, title: '', subItems: [] },
-  { id: 3, title: '', subItems: [] },
-  { id: 4, title: '', subItems: [] },
-  { id: 5, title: '', subItems: [] },
-  { id: 6, title: '', subItems: [] },
-  { id: 7, title: '', subItems: [] }
-])
-const getMenuItems = () => {
-  // 遍历分类数组，生成菜单项
-  categories.value.forEach((category, index) => {
-    // 防止超过菜单的长度
-    if (index >= 8) return;
 
-    // 从 products 中筛选出属于当前分类的商品
-    const relatedProducts = products.value.filter(
-      (product) => product.categoryId === category.id
-    );
 
-    // 构造菜单项
-    menuItems.value[index] = {
-      id: category.id,
-      title: category.name, // 分类名称
-      subItems: relatedProducts.slice(0, 3), // 存储完整的商品对象
-    };
-  });
-};
-// // 侧边栏菜单数据
-// const menuItems = ref([
-//   { id: 0, title: '开发工具', subItems: ['代码编辑器', 'IDE集成开发环境', '版本控制工具'] },
-//   { id: 1, title: '设计工具', subItems: ['平面设计', 'UI/UX设计', '3D建模'] },
-//   { id: 2, title: '办公与协作', subItems: ['文档编辑', '项目管理', '在线会议'] },
-//   { id: 3, title: '教育与学习', subItems: ['语言学习', '编程课程', '在线教育平台'] },
-//   { id: 4, title: '安全与优化', subItems: ['杀毒软件', '系统清理工具', '密码管理器'] },
-//   { id: 5, title: '操作系统', subItems: ['Windows', 'Linux', 'macOS'] },
-//   { id: 6, title: '企业软件', subItems: ['ERP系统', 'CRM系统', '数据分析工具'] },
-//   { id: 7, title: '游戏与娱乐', subItems: ['PC游戏', '模拟器', '多媒体工具'] }
-// ]);
 </script>
 
 
@@ -80,23 +53,21 @@ const getMenuItems = () => {
       <el-aside width="200px" class="menu-bar">
         <el-menu default-active="0" class="el-menu-vertical-demo">
           <el-sub-menu
-            v-for="item in menuItems"
-            :key="item.id"
-            :index="item.id.toString()"
+            v-for="firstCat in menuItems"
+            :key="firstCat.id"
+            :index="firstCat.id.toString()"
             class="sub_menu"
           >
-            <template #title>{{ item.title }}</template>
-            <!-- 展开子菜单项 -->
+            <template #title>{{ firstCat.name }}</template>
+            
+            <!-- 二级分类菜单项 -->
             <el-menu-item
-              v-for="(subItem, subIndex) in item.subItems"
-              :key="subIndex"
-              :index="`${item.id}-${subIndex}`"
-              @click="detail(subItem.id)"
+              v-for="secondCat in firstCat.children"
+              :key="secondCat.id"
+              :index="`${firstCat.id}-${secondCat.id}`"
+              @click="goToCategory(secondCat.id)"
             >
-            <div class="menu-item-content">
-              <img :src="subItem.image" alt="Item Image" class="menu-item-image" />
-              <span>{{ subItem.name }}</span>
-            </div>
+              <span>{{ secondCat.name }}</span>
             </el-menu-item>
           </el-sub-menu>
         </el-menu>

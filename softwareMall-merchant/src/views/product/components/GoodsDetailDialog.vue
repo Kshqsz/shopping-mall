@@ -19,23 +19,23 @@
         </div>
         <div class="basic-info">
           <h2 class="name">{{ goodsData.name }}</h2>
-          <div class="price">¥{{ formatPrice(goodsData.price) }}</div>
+          <div class="price">¥{{ formatPrice(goodsData.lowPrice) }}</div>
           
           <div class="meta-info">
             <div class="meta-item">
-              <span class="label">分类：</span>
-              <span class="value">{{ goodsData.categoryName }}</span>
+              <span class="label">一级分类：</span>
+              <span class="value">{{ goodsData.level1CategoryName }}</span>
             </div>
             <div class="meta-item">
-              <span class="label">库存：</span>
-              <span class="value">{{ goodsData.stock }}</span>
+              <span class="label">二级分类：</span>
+              <span class="value">{{goodsData.level2CategoryName }}</span>
             </div>
             <div class="meta-item">
-              <span class="label">销量：</span>
-              <span class="value">{{ goodsData.sales }}</span>
+              <span class="label">总销量：</span>
+              <span class="value">{{ goodsData.sales || 0 }}</span>
             </div>
             <div class="meta-item">
-              <span class="label">状态：</span>
+              <span class="label">商品状态：</span>
               <el-tag 
                 size="medium" 
                 :type="statusType[goodsData.status]"
@@ -58,22 +58,87 @@
       <el-tabs v-model="activeTab" class="detail-tabs">
         <el-tab-pane label="商品描述" name="desc">
           <div class="description">
-            {{ goodsData.desc || '暂无描述' }}
+            {{ goodsData.description || '暂无描述' }}
           </div>
         </el-tab-pane>
         
-        <el-tab-pane label="商品图片" name="images">
-          <div class="image-gallery">
-            <el-image 
-              v-for="(img, index) in goodsData.detailImages" 
-              :key="index"
-              :src="img" 
-              fit="cover" 
-              class="detail-image"
-              :preview-src-list="goodsData.detailImages"
-            />
+        <el-tab-pane label="商品规格" name="specs">
+  <div v-if="goodsData.specItemVos && goodsData.specItemVos.length > 0">
+    <!-- 显示规格名称（从第一个SKU的name中提取） -->
+    <div class="spec-names">
+      <h3>规格组合：</h3>
+      <div class="spec-name-tags">
+        <el-tag 
+          v-for="(specName, index) in extractSpecNames(goodsData.specItemVos[0].name)" 
+          :key="index"
+          type="info"
+          class="spec-name-tag"
+        >
+          {{ specName }}
+        </el-tag>
+      </div>
+    </div>
+    
+    <!-- 显示SKU列表 -->
+    <el-table 
+      :data="goodsData.specItemVos" 
+      border
+      style="width: 100%; margin-top: 20px;"
+    >
+      <el-table-column 
+        label="规格组合" 
+        prop="name"
+      >
+        <template #default="{ row }">
+          <div class="sku-name">{{ row.name }}</div>
+        </template>
+      </el-table-column>
+      
+      <el-table-column label="价格" width="150" align="center">
+        <template #default="{ row }">
+          <div class="sku-price">¥{{ formatPrice(row.price) }}</div>
+        </template>
+      </el-table-column>
+      
+      <el-table-column label="库存" width="150" align="center">
+        <template #default="{ row }">
+          <div class="sku-stock">{{ row.stock }}</div>
+        </template>
+      </el-table-column>
+      
+      <el-table-column label="销量" width="150" align="center">
+        <template #default="{ row }">
+          <div class="sku-sales">{{ row.sales }}</div>
+        </template>
+      </el-table-column>
+      
+      <el-table-column label="图片" width="120" align="center">
+        <template #default="{ row }">
+          <el-image
+            v-if="row.image"
+            :src="row.image"
+            fit="cover"
+            class="sku-image"
+            :preview-src-list="[row.image]"
+            hide-on-click-modal
+          >
+            <template #error>
+              <div class="image-error">
+                <el-icon><Picture /></el-icon>
+              </div>
+            </template>
+          </el-image>
+          <div v-else class="no-image">
+            <el-icon><Picture /></el-icon>
           </div>
-        </el-tab-pane>
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
+  <div v-else class="no-specs">
+    <el-empty description="该商品没有设置规格" />
+  </div>
+</el-tab-pane>
         
         <el-tab-pane label="商品视频" name="video">
           <div v-if="goodsData.video" class="video-container">
@@ -99,8 +164,8 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-//import { fetchGoodsDetail } from '@/api/goods'
-import { VideoCameraFilled } from '@element-plus/icons-vue'
+import { VideoCameraFilled, Picture } from '@element-plus/icons-vue'
+import { selectGoodDetail } from '@/api/product'
 
 const props = defineProps({
   goodsId: {
@@ -113,30 +178,40 @@ const dialogVisible = defineModel()
 
 // 状态映射
 const statusText = {
-  1: '审核中',
-  2: '已下架',
-  3: '已上架'
+  0: '上架审核中',
+  [-1]: '已下架',
+  1: '已上架'
 }
 const statusType = {
-  1: 'warning',
-  2: 'info',
-  3: 'success'
+  0: 'warning',
+  [-1]: 'danger',
+  1: 'success'
 }
 
 const activeTab = ref('desc')
 const goodsData = ref(null)
+const level2Categories = ref([])
+
+
+
+// 获取商品详情
+const fetchGoodsData = async () => {
+  try {
+    selectGoodDetail(props.goodsId)
+    goodsData.value = (await selectGoodDetail(props.goodsId)).data.data
+    
+    
+  } catch (error) {
+    console.error('获取商品详情失败:', error)
+  }
+}
 
 watch(dialogVisible, async (visible) => {
   if (visible && props.goodsId) {
-    // 获取商品详情
-   /*  try {
-      const res = await fetchGoodsDetail(props.goodsId)
-      goodsData.value = res.data
-    } catch (error) {
-      console.error('Failed to fetch goods detail:', error)
-    } */
+    await fetchGoodsData()
   } else {
     goodsData.value = null
+    level2Categories.value = []
   }
 })
 
@@ -154,6 +229,15 @@ const formatDate = (date) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// 从SKU名称中提取规格名称（例如："哑光黑/12+256" -> ["颜色", "内存"]）
+const extractSpecNames = (skuName) => {
+  if (!skuName) return []
+  // 这里假设规格名称是用"/"分隔的
+  const parts = skuName.split('/')
+  // 根据您的实际业务逻辑返回规格名称
+  return parts.length === 2 ? ['颜色', '内存'] : ['规格']
 }
 </script>
 
@@ -235,26 +319,59 @@ const formatDate = (date) => {
   line-height: 1.8;
   color: #606266;
   padding: 10px 0;
+  white-space: pre-wrap;
 }
 
-.image-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+.spec-group {
+  margin-bottom: 20px;
 }
 
-.detail-image {
-  width: 100%;
-  height: 180px;
-  border-radius: 6px;
+.spec-title {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #606266;
+}
+
+.spec-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.spec-value-tag {
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.sku-price {
+  color: #ff5000;
+  font-weight: 600;
+}
+
+.sku-stock {
+  font-weight: 500;
+}
+
+.sku-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
   border: 1px solid #eee;
-  cursor: pointer;
-  transition: transform 0.2s;
 }
 
-.detail-image:hover {
-  transform: scale(1.02);
+.no-image {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #909399;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+}
+
+.no-specs {
+  padding: 40px 0;
 }
 
 .video-container {
@@ -281,5 +398,14 @@ const formatDate = (date) => {
 .no-video .el-icon {
   font-size: 48px;
   margin-bottom: 16px;
+}
+
+.image-error {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #909399;
 }
 </style>

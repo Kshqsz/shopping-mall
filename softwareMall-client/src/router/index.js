@@ -24,7 +24,8 @@ const router = createRouter({
           children: [
             { path: '/profile', component: () => import('@/views/user/Profile.vue')},
             { path: '/orders', component: () => import('@/views/user/Orders.vue')},
-            { path: '/favorites', component: () => import('@/views/user/Favorites.vue')}
+            { path: '/favorites', component: () => import('@/views/user/Favorites.vue')},
+            { path: '/address', component: () => import('@/views/user/AddressIndex.vue')}
           ]
         }
       ] 

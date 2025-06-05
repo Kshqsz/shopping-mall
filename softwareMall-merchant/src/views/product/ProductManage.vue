@@ -68,6 +68,7 @@ import GoodsAddDialog from '@/views/product/components/GoodsAddDialog.vue'
 import GoodsEditDialog from '@/views/product/components/GoodsEditDialog.vue'
 import GoodsDetailDialog from './components/GoodsDetailDialog.vue'
 import { Plus } from '@element-plus/icons-vue'
+import { productStatis } from '@/api/product'
 // 搜索参数
 const searchParams = ref({})
 const goodsListRef = ref(null)
@@ -83,8 +84,8 @@ const stats = reactive({
   total: 0,
   onSale: 0,
   pending: 0,
-  offSale: 0
 })
+
 
 // 搜索处理
 const handleSearch = (params) => {
@@ -116,6 +117,16 @@ const showDetailDialog = (goodsId) => {
   detailDialogVisible.value = true
 }
 
+// 获取统计信息
+const getStatis = async() => {
+  const res = (await productStatis()).data.data
+  stats.total = res.total
+  stats.onSale = res.onSale
+  stats.pending = res.pending
+
+}
+getStatis()
+
 // 新增成功处理
 const handleAddSuccess = () => {
   goodsListRef.value?.refresh()
@@ -129,11 +140,8 @@ const handleEditSuccess = () => {
 }
 
 // 更新状态统计
-const updateStats = (newStats) => {
-  stats.total = newStats.total
-  stats.onSale = newStats.onSale
-  stats.pending = newStats.pending
-  stats.offSale = newStats.offSale
+const updateStats = () => {
+  getStatis()
 }
 </script>
 

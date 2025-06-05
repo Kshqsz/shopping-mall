@@ -45,7 +45,7 @@ const handleLogout = () => {
       </div>  
     </header>  
     <el-row class="row">  
-      <el-col :span="5" class="menu-column">  
+      <el-col :span="3" class="menu-column">  
         <el-menu  
           :default-active="activeIndex"  
           class="side-menu"  
@@ -72,7 +72,7 @@ const handleLogout = () => {
           </el-menu-item>  
         </el-menu>  
       </el-col>  
-      <el-col :span="19" class="content-column">  
+      <el-col :span="21" class="content-column">  
         <div class="content">  
           <router-view></router-view>  
         </div>  

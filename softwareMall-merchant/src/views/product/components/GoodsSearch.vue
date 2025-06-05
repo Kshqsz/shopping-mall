@@ -132,11 +132,13 @@ const form = reactive({
   level1Category: '',
   level2Category: '',
   status:'',
-  sort: null
 })
 
 const search = () => {
-  emit('search', { ...form })
+  emit('search', { 
+    ...form,
+    sort: form.sort
+   })
 }
 
 const reset = () => {

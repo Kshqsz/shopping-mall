@@ -10,9 +10,8 @@
     "lint": "eslint . --fix"
   },
   "dependencies": {
-    "@copilotkit/react-core": "^1.8.13",
-    "@copilotkit/react-ui": "^1.8.13",
     "@element-plus/icons-vue": "^2.3.1",
+    "@element-plus/locale": "^0.0.5",
     "@fortawesome/fontawesome-free": "^6.7.1",
     "axios": "^1.7.7",
     "element-china-area-data": "^6.1.0",

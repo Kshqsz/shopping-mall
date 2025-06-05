@@ -26,7 +26,6 @@
 import { ref ,onMounted} from 'vue';
 import { jwtDecode } from 'jwt-decode'   
 import {useMerchantStore} from '@/stores/merchant'
-import {getAllProduct} from '@/api/product'
 /* import { admingetalluser} from '@/api/user'; 
 import { getAllMerchant } from '../api/merchant'*/
 import { getOrderWithPrice } from '@/api/order'; 
@@ -68,17 +67,9 @@ const salesStats = ref({
 
 //获取上架商品数
 const getAllProductList = async () => {  
-  try {  
-    const res = await getAllProduct();  
-    console.log('获取商品列表成功:', res.data.data);  
+ 
     
-    // 确保响应式  
-    const filteredProduct = res.data.data.filter(product => product.status == 1 && product.merchantId ==  merchantID.value); 
-    orderStats.value.count = filteredProduct.length
-     productStats.value.count = filteredProduct.length
-  } catch (error) {  
-    console.error('获取商品列表失败:', error);  
-  }  
+    
 };
 
 //获取所有订单

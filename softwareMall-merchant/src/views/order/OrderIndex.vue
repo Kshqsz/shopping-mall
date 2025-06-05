@@ -45,7 +45,6 @@
 <script setup>  
 import { ref, computed ,onMounted} from 'vue';  
 import { getAllOrder } from '@/api/order';
-import { getAllProduct } from '@/api/product';
 import { admingetalluser } from '@/api/user';
 
 const orderList = ref([]);  
@@ -75,22 +74,7 @@ const getOrderList = async () =>{
 
 //获取产品列表
 const getAllProductList = async () => {  
-  try {  
-    const res = await getAllProduct();  
-    console.log('获取商品列表成功:', res.data.data);  
-
-    productMap.value.splice(0, productMap.value.length, ...res.data.data);
-    res.data.data.forEach(product => {  
-      productMap[product.id] = product.name; 
-      
-    });
-    productMap2.value.splice(0, productMap2.value.length, ...res.data.data);
-    res.data.data.forEach(product => {  
-      productMap2[product.id] = product.source;  
-    });     
-  } catch (error) {  
-    console.error('获取商品列表失败:', error);  
-  }  
+   
 };
 //获取用户列表
 const getAllUser = async () => {  

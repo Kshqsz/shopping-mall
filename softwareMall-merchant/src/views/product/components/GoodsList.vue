@@ -1,7 +1,7 @@
 <template>
   <div class="goods-list">
     <el-table 
-      :data="goodsList" 
+      :data="sortedGoodsList" 
       v-loading="loading" 
       style="width: 100%;" 
       size="medium"
@@ -9,31 +9,31 @@
       highlight-current-row
       @row-click="handleRowClick"
     >
-      <el-table-column label="商品名称" width="150" align="center">
+      <el-table-column label="商品名称" width="180" align="center">
         <template #default="{ row }">
             <div class="name">{{ row.name }}</div>
         </template>
       </el-table-column>
       
-      <el-table-column label="最低售价" width="150" align="center">
+      <el-table-column label="最低售价" width="180" align="center">
         <template #default="{ row }">
-          <div class="price">¥{{ formatPrice(row.price) }}</div>
+          <div class="price">¥{{ formatPrice(row.lowPrice) }}</div>
         </template>
       </el-table-column>
       
-      <el-table-column label="总销量" width="150" align="center">
+      <el-table-column label="总销量" width="180" align="center">
         <template #default="{ row }">
-          <div class="sales">{{ row.sales }}</div>
+          <div class="sales">{{ row.totalSales }}</div>
         </template>
       </el-table-column>
 
-      <el-table-column label="分类" width="150" align="center">
+      <el-table-column label="分类" width="180" align="center">
         <template #default="{ row }">
-          <div class="stock">{{ row.category }}</div>
+          <div class="stock">{{ row.secondCategoryName }}</div>
         </template>
       </el-table-column>
       
-      <el-table-column label="状态" width="150" align="center">
+      <el-table-column label="状态" width="180" align="center">
         <template #default="{ row }">
           <el-tag 
             size="medium" 
@@ -44,10 +44,15 @@
           </el-tag>
         </template>
       </el-table-column>
-      
-      <el-table-column label="操作" width="180" align="center" fixed="right">
+      <el-table-column label="更新时间" width="200" align="center">
         <template #default="{ row }">
-          <div class="actions">
+          <div class="sales">{{ row.updateTime ? row.updateTime.replace('T', ' ').slice(0, 19) : '' }}</div>
+        </template>
+      </el-table-column>
+      
+      <el-table-column label="操作" width="250" align="center" >
+        <template #default="{ row }">
+          <div class="fixed-actions">
             <el-button 
               type="primary" 
               size="small" 
@@ -60,13 +65,37 @@
               type="warning" 
               size="small" 
               plain
+              align="left"
               @click.stop="handleEdit(row.id)"
             >
               编辑
             </el-button>
+            <div class="dynamic-actions">
+              <el-button 
+                v-if="row.status === 1" 
+                type="danger" 
+                size="small" 
+                plain
+                @click.stop="handleOffShelves(row.id)"
+              >
+                下架
+              </el-button>
+              
+              <el-button 
+                v-if="row.status === -1" 
+                type="success" 
+                size="small" 
+                plain
+                @click.stop="handleReOnShelves(row.id)"
+              >
+                重新上架
+              </el-button>
+            </div>
           </div>
         </template>
+        
       </el-table-column>
+
     </el-table>
     
     <div class="pagination-container">
@@ -85,8 +114,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
-import { selectGoods } from '@/api/product'
+import { ref, reactive, watch,computed } from 'vue'
+import { selectGoods,updateGoodsStatus } from '@/api/product'
+import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   searchParams: Object
@@ -101,8 +131,8 @@ const statusText = {
   1: '已上架'
 }
 const statusType = {
-  [-1]: 'warning',
-  0: 'info',
+  [-1]: 'danger',
+  0: 'warning',
   1: 'success'
 }
 
@@ -114,6 +144,63 @@ const pagination = reactive({
   size: 10,
   total: 0
 })
+
+// 新增：更新商品状态
+const updateStatus = async (goodsId, newStatus) => {
+  try {
+    const response = await updateGoodsStatus({
+      id: goodsId,
+      status: newStatus
+    })
+    
+    if (response.data.code === 0) {
+      ElMessage.success(`商品${newStatus === 1 ? '上架' : '下架'}成功！`)
+      
+      // 更新本地数据状态 - 避免重新获取整个列表
+      const index = goodsList.value.findIndex(item => item.id === goodsId)
+      if (index !== -1) {
+        goodsList.value[index].status = newStatus
+        goodsList.value[index].updateTime = new Date().toISOString()
+      }
+      
+      // 通知父组件状态变化
+      emit('status-changed')
+    } else {
+      ElMessage.error(response.data.message || '操作失败')
+    }
+  } catch (error) {
+    ElMessage.error('操作失败：' + error.message)
+  }
+}
+
+// 下架商品
+const handleOffShelves = (goodsId) => {
+  ElMessageBox.confirm('确定要下架该商品吗？下架后用户将无法购买', '确认下架', {
+    confirmButtonText: '确认下架',
+    cancelButtonText: '取消',
+    type: 'warning',
+    center: true
+  }).then(() => {
+    updateStatus(goodsId, -1)
+  }).catch(() => {
+    // 用户取消操作
+  })
+}
+
+// 重新上架商品
+const handleReOnShelves = (goodsId) => {
+  ElMessageBox.confirm('确定要重新上架该商品吗？', '确认上架', {
+    confirmButtonText: '确认上架',
+    cancelButtonText: '取消',
+    type: 'success',
+    center: true
+  }).then(() => {
+    updateStatus(goodsId,0)
+  }).catch(() => {
+    // 用户取消操作
+  })
+}
+
 
 // 监听搜索参数变化
 watch(() => props.searchParams, () => {
@@ -142,6 +229,7 @@ const getGoodsList = async () => {
     
     // 调用API获取数据
     const response = await selectGoods(params)
+    console.log(response)
     const data = response.data.data
     
     // 更新列表数据
@@ -180,6 +268,23 @@ const handleRowClick = (row) => {
 const formatPrice = (price) => {
   return Number(price).toFixed(2)
 }
+
+// 新增排序方法
+const sortMethods = {
+  salesDesc: (a, b) => b.totalSales - a.totalSales,
+  salesAsc: (a, b) => a.totalSales - b.totalSales,
+  priceDesc: (a, b) => b.lowPrice - a.lowPrice,
+  priceAsc: (a, b) => a.lowPrice - b.lowPrice,
+  newest: (a, b) => new Date(b.updateTime) - new Date(a.updateTime)
+}
+// 使用computed实现前端排序
+const sortedGoodsList = computed (() => {
+  const list = [...goodsList.value]
+  if (props.searchParams.sort && sortMethods[props.searchParams.sort]) {
+    return list.sort(sortMethods[props.searchParams.sort])
+  }
+  return list
+})
 
 // 初始化
 getGoodsList()
@@ -252,5 +357,25 @@ getGoodsList()
   background: #fff;
   display: flex;
   justify-content: flex-end;
+}
+/* 操作按钮容器 */
+.actions-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* 左侧固定按钮组 */
+.fixed-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 右侧动态按钮组 */
+.dynamic-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px; /* 确保动态按钮靠右 */
 }
 </style>

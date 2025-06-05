@@ -33,3 +33,28 @@ export const userGetByIdService= (id) => {
 export const userCountOrderService = ({userId, status}) => {
     return request.post("/user/countOrder", {userId, status})
 }
+
+// 新增地址
+export const addAddress = (address) =>{
+    return request.post("/user/addAdderss",address)
+}
+
+//查找所有地址
+export const addressList = () => {
+    return request.get("/user/addressList")
+}
+
+//设置默认地址
+export const toDefault = (id) => {
+    return request.post(`/user/address?id=${id}`)
+}
+
+// 删除地址
+export const deleteAddress = (id) => {
+    return request.delete(`/user/address?id=${id}`)
+}
+
+// 更新地址
+export const updateAddress = (address) =>{
+    return request.post("/user/updateAddress",address)
+}
