@@ -3,12 +3,14 @@ package cn.edu.usts.cs2022.mapper;
 import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
 import cn.edu.usts.cs2022.pojo.dto.StatusDto;
 import cn.edu.usts.cs2022.pojo.po.Product;
-import cn.edu.usts.cs2022.pojo.po.Result;
+import cn.edu.usts.cs2022.pojo.query.ProductClientQuery;
 import cn.edu.usts.cs2022.pojo.query.ProductSimpleQuery;
-import cn.edu.usts.cs2022.pojo.vo.ProductDetailVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductEditDetailVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductStatisticsVo;
+import cn.edu.usts.cs2022.pojo.vo.client.ProductClientDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.client.ProductClientSimpleVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductEditDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductSimpleVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductStatisticsVo;
 import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.*;
 
@@ -18,8 +20,8 @@ import java.util.List;
 public interface ProductMapper {
     void add(Product product);
 
-    @Select("select * from product")
-    List<Product> getAllProduct();
+    //客户端查询全部商品列表
+    List<ProductClientSimpleVo> getAllProduct(ProductClientQuery productClientQuery);
 
     @Select("select * from product where merchant_id = #{merchantId}")
     List<Product> getAllByMerchantId(Integer merchantId);
@@ -28,8 +30,12 @@ public interface ProductMapper {
 
     List<Product> search(String searchInfo);
 
-    @Select("select * from product where id = #{id}")
-    Product getById(@Param("id") Integer id);
+    //客户端获取单个商品详细信息
+    @Select("select a.id,a.name,a.merchant_id,a.first_category_id as level1Category,a.first_category_name as level1CategoryName," +
+            "a.second_category_id as level2Category,a.second_category_name as level2CategoryName,a.video,a.image as mainImage," +
+            "a.description,a.total_sales,a.low_price,b.shop_name" +
+            " from product a LEFT JOIN merchant b ON a.merchant_id = b.id where a.id = #{id}")
+    ProductClientDetailVo getProductClientDetailById(@Param("id") Integer id);
 
     List<Product> getByIds(@Param("ids") List<Integer> ids);
 

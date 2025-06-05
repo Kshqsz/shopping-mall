@@ -5,11 +5,10 @@ import cn.edu.usts.cs2022.pojo.dto.*;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
 import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.po.User;
-import cn.edu.usts.cs2022.pojo.vo.AddressVo;
+import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 import cn.edu.usts.cs2022.service.UserService;
 import cn.edu.usts.cs2022.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;

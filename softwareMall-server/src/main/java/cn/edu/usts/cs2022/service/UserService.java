@@ -4,9 +4,8 @@ import cn.edu.usts.cs2022.pojo.dto.AddressDto;
 import cn.edu.usts.cs2022.pojo.dto.CountOrderDTO;
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
-import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.po.User;
-import cn.edu.usts.cs2022.pojo.vo.AddressVo;
+import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 
 import java.util.List;
 

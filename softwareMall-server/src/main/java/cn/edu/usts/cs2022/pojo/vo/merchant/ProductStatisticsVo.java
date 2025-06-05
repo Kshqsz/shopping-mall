@@ -1,4 +1,4 @@
-package cn.edu.usts.cs2022.pojo.vo;
+package cn.edu.usts.cs2022.pojo.vo.merchant;
 
 import lombok.Data;
 

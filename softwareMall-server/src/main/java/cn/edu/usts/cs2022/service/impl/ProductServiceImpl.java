@@ -6,10 +6,13 @@ import cn.edu.usts.cs2022.mapper.SpecMapper;
 import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
 import cn.edu.usts.cs2022.pojo.dto.StatusDto;
 import cn.edu.usts.cs2022.pojo.po.*;
+import cn.edu.usts.cs2022.pojo.query.ProductClientQuery;
 import cn.edu.usts.cs2022.pojo.query.ProductSimpleQuery;
-import cn.edu.usts.cs2022.pojo.vo.ProductDetailVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductEditDetailVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo;
+import cn.edu.usts.cs2022.pojo.vo.client.ProductClientDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.client.ProductClientSimpleVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductEditDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductSimpleVo;
 import cn.edu.usts.cs2022.service.ProductService;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import com.github.pagehelper.Page;
@@ -100,9 +103,11 @@ public class ProductServiceImpl implements ProductService {
 
     }
 
+    //客户端根据条件查询商品
     @Override
-    public List<Product> getAllProduct() {
-        return productMapper.getAllProduct();
+    public List<ProductClientSimpleVo> getAllProduct(ProductClientQuery productClientQuery) {
+        List<ProductClientSimpleVo> productDetailVoList = productMapper.getAllProduct(productClientQuery);
+        return productDetailVoList;
     }
 
     @Override
@@ -111,10 +116,7 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.getAllByMerchantId(merchantId);
     }
 
-    @Override
-    public void update(Product product) {
-        productMapper.update(product);
-    }
+
 
     @Override
     public List<Product> search(String searchInfo) {
@@ -122,9 +124,12 @@ public class ProductServiceImpl implements ProductService {
         return productList;
     }
 
+    //客户端获取单个详细商品信息
     @Override
-    public Product getById(Integer id) {
-        return productMapper.getById(id);
+    public ProductClientDetailVo getById(Integer id) {
+        ProductClientDetailVo productClientDetailVo = productMapper.getProductClientDetailById(id);
+        productClientDetailVo.setSpecItemVos(specMapper.selectSpecItems(id));
+        return productClientDetailVo;
     }
 
     @Override

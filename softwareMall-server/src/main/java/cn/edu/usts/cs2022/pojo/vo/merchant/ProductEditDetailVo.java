@@ -1,6 +1,5 @@
-package cn.edu.usts.cs2022.pojo.vo;
+package cn.edu.usts.cs2022.pojo.vo.merchant;
 
-import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
 import lombok.Data;
 
 import java.math.BigDecimal;

@@ -40,7 +40,7 @@
     </select>
 
     <!--查询简易商品列表-->
-    <select id="selectSimpleProductList" resultType="cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo">
+    <select id="selectSimpleProductList" resultType="cn.edu.usts.cs2022.pojo.vo.merchant.ProductSimpleVo">
         select id,name,low_price,second_category_id,second_category_name,status,total_sales,update_time
         from product
         <where>
@@ -58,6 +58,33 @@
             and name like concat('%',#{name},'%')
             </if>
         </where>
+    </select>
+
+    <select id="getAllProduct" resultType="cn.edu.usts.cs2022.pojo.vo.client.ProductClientSimpleVo">
+        SELECT
+        a.id,
+        a.name,
+        a.first_category_id as level1Category,
+        a.first_category_name as level1CategoryName,
+        a.second_category_id as level2Category,
+        a.second_category_name as level2CategoryName,
+        a.image as mainImage,
+        a.merchant_id,
+        a.total_sales,
+        a.low_price,
+        b.shop_name
+        FROM product a
+        LEFT JOIN merchant b ON a.merchant_id = b.id
+        WHERE a.status = 1
+        <if test="name != null and name != ''">
+            AND a.name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="level1Category != null">
+            AND a.first_category_id = #{level1Category}
+        </if>
+        <if test="level2Category != null">
+            AND a.second_category_id = #{level2Category}
+        </if>
     </select>
 
 </mapper>

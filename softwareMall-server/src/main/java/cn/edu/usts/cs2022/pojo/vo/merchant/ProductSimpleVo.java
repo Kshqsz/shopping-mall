@@ -1,9 +1,8 @@
-package cn.edu.usts.cs2022.pojo.vo;
+package cn.edu.usts.cs2022.pojo.vo.merchant;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 public class ProductSimpleVo {

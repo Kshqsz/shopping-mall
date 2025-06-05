@@ -7,11 +7,14 @@ import cn.edu.usts.cs2022.pojo.dto.StatusDto;
 import cn.edu.usts.cs2022.pojo.po.PageResult;
 import cn.edu.usts.cs2022.pojo.po.Product;
 import cn.edu.usts.cs2022.pojo.po.Result;
+import cn.edu.usts.cs2022.pojo.query.ProductClientQuery;
 import cn.edu.usts.cs2022.pojo.query.ProductSimpleQuery;
-import cn.edu.usts.cs2022.pojo.vo.ProductDetailVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductEditDetailVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductSimpleVo;
-import cn.edu.usts.cs2022.pojo.vo.ProductStatisticsVo;
+import cn.edu.usts.cs2022.pojo.vo.client.ProductClientDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.client.ProductClientSimpleVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductEditDetailVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductSimpleVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.ProductStatisticsVo;
 import cn.edu.usts.cs2022.service.ProductService;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ public class ProductController {
     private final ProductService productService;
 
     private final ProductMapper productMapper;
+    //新增商品
     @PostMapping("/add")
     public Result add(@RequestBody ProductDTO productDTO) {
         System.out.println(productDTO.toString());
@@ -36,9 +40,10 @@ public class ProductController {
         return Result.success();
     }
 
-    @GetMapping("/all")
-    public Result<List<Product>> getAllProduct() {
-        List<Product> productList = productService.getAllProduct();
+    //根据条件获取商品信息
+    @PostMapping("/all")
+    public Result<List<ProductClientSimpleVo>> getAllProduct(@RequestBody ProductClientQuery productClientQuery) {
+        List<ProductClientSimpleVo> productList = productService.getAllProduct(productClientQuery);
         return Result.success(productList);
     }
 
@@ -48,21 +53,16 @@ public class ProductController {
         return Result.success(productList);
     }
 
-    @PutMapping
-    public Result update(@RequestBody Product product) {
-        productService.update(product);
-        return Result.success();
-    }
 
     @GetMapping("/search")
     public Result<List<Product>> search(String searchInfo) {
         List<Product> productList = productService.search(searchInfo);
         return Result.success(productList);
     }
-
+    // 客户端获取单个详细商品信息
     @GetMapping("/{id}")
-    public Result<Product> getById(@PathVariable("id") Integer id) {
-        Product product = productService.getById(id);
+    public Result<ProductClientDetailVo> getById(@PathVariable("id") Integer id) {
+        ProductClientDetailVo product = productService.getById(id);
         return Result.success(product);
     }
 
@@ -107,9 +107,9 @@ public class ProductController {
         return Result.success(productService.selectEditDetailProduct(id));
     }
 
+    //修改商品信息
     @PostMapping("/update")
     public Result updateProduct(@RequestBody ProductDTO productDTO) {
-        System.out.println(productDTO.toString());
         productService.updateProduct(productDTO);
         return Result.success();
     }

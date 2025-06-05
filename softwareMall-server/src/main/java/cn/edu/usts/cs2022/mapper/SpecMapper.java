@@ -4,7 +4,7 @@ import cn.edu.usts.cs2022.pojo.po.SpecItem;
 import cn.edu.usts.cs2022.pojo.po.SpecItemValue;
 import cn.edu.usts.cs2022.pojo.po.SpecName;
 import cn.edu.usts.cs2022.pojo.po.SpecValue;
-import cn.edu.usts.cs2022.pojo.vo.SpecItemVo;
+import cn.edu.usts.cs2022.pojo.vo.merchant.SpecItemVo;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

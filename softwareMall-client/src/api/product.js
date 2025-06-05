@@ -9,8 +9,8 @@ export const productGetByIdService = (id) => {
     return request.get(`/product/${id}`)
 }
 
-export const productGetAllService = () => {
-    return request.get('/product/all')
+export const productGetAllService = (searchQuery) => {
+    return request.post('/product/all',searchQuery)
 }
 
 export const productGetByIdsService = (ids) => {

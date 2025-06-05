@@ -5,7 +5,7 @@ import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
 import cn.edu.usts.cs2022.pojo.po.Address;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
 import cn.edu.usts.cs2022.pojo.po.User;
-import cn.edu.usts.cs2022.pojo.vo.AddressVo;
+import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

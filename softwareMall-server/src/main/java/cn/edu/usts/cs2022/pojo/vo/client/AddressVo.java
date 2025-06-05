@@ -1,8 +1,7 @@
-package cn.edu.usts.cs2022.pojo.vo;
+package cn.edu.usts.cs2022.pojo.vo.client;
 
 import lombok.Data;
 
-import java.util.List;
 @Data
 public class AddressVo {
     private Long id;

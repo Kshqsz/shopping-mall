@@ -1,125 +1,186 @@
 <script setup>
-import { ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { productSearchService } from '@/api/product'
-import { categoryGetAllService } from '@/api/category'
-import { onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { productGetAllService } from '@/api/product'
+import ProductCard from '@/components/ProductCard.vue' // 确保正确导入组件
+import { debounce } from 'lodash-es' // 引入防抖函数
 
-// 获取路由的查询参数
-const route = useRoute();
-const categories = ref([]);
+const route = useRoute()
+const keyword = ref('')
+const products = ref([])
+const loading = ref(false)
+const pageTitle = ref('')
+const hasSearched = ref(false) // 跟踪是否已执行搜索
 
-// 当前页码
-const currentPage = ref(1);
-// 每页展示的数量
-const itemsPerPage = ref(10);
-// 搜索查询条件
-const searchQuery = ref(route.query.query || '');
-// 过滤后的搜索结果
-const filteredResults = ref([]);
-// 分页后的结果
-const pagedResults = ref([]);
-
-// 获取当前分类名称
-const getCategoryName = (id) => {
-  const category = categories.value.find(item => item.id === id);
-  return category ? category.name : "未知分类";
+// 获取搜索关键字
+const getKeyword = () => {
+  return route.query.q || ''
 }
 
-// 过滤函数
-const filterResults = async () => {
-  const res = await productSearchService(searchQuery.value);
-  filteredResults.value = res.data.data;
-  filteredResults.value = filteredResults.value.filter(item => item.status === 1);
-  updatePagedResults();  // 更新分页结果
-};
+// 带防抖的搜索函数
+const debouncedSearch = debounce(async () => {
+  loading.value = true
+  try {
+    const searchQuery = {
+      name: keyword.value,
+      level1Category: null,
+      level2Category: null
+    }
+    const res = (await productGetAllService(searchQuery)).data.data
+    products.value = res
+    
+    // 更新页面标题
+    pageTitle.value = keyword.value 
+      ? `搜索关键词：${keyword.value}`
+      : '全部商品'
+  } catch (error) {
+    console.error('搜索失败', error)
+  } finally {
+    loading.value = false
+    hasSearched.value = true
+  }
+}, 300)
 
-// 更新分页结果
-const updatePagedResults = () => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  pagedResults.value = filteredResults.value.slice(start, end);
-};
+// 首次加载
+onMounted(() => {
+  keyword.value = getKeyword()
+  debouncedSearch()
+})
 
-// 监听 searchQuery 和 route.query.query 变化，确保每次查询变化时都进行过滤
+// 监听路由参数变化
 watch(
-  () => [route.query.query, route.query.t],
-  () => {
-    searchQuery.value = route.query.query || ''; // 更新 searchQuery
-    filterResults(); // 重新过滤
-  },
-  { immediate: true } // 页面加载时就调用一次过滤
-);
-
-// 处理分页变化
-const pageChange = (page) => {
-  currentPage.value = page;  // 更新当前页码
-  updatePagedResults();  // 更新分页数据
-};
-
-onMounted(async () => {
-  const category_res = await categoryGetAllService();
-  categories.value = category_res.data.data;
-});
+  () => route.query.q,
+  (newVal) => {
+    keyword.value = newVal
+    debouncedSearch()
+  }
+)
 </script>
 
 <template>
   <div class="search-result-page">
-    <div v-if="filteredResults.length === 0" class="no-data">
-      <p>暂无数据，请尝试其他搜索关键词。</p>
-    </div>
-    <div v-else class="product-list">
-      <ProductCard
-        v-for="product in pagedResults"
-        :key="product.id"
-        :product="product"
-        :categoryName="getCategoryName(product.categoryId)"
-      />
+    <!-- 页面标题和状态信息 -->
+    <div v-if="hasSearched" class="page-header">
+      <h1 class="title">{{ pageTitle }}</h1>
+      <div v-if="products.length > 0" class="results-count">
+        找到 {{ products.length }} 件商品
+      </div>
     </div>
 
-    <!-- 分页组件 -->
-    <el-pagination
-      v-if="filteredResults.length > 0"
-      :current-page="currentPage"
-      :page-size="itemsPerPage"
-      :total="filteredResults.length"
-      layout="prev, pager, next"
-      @current-change="pageChange"
-      class="pagination"
-    />
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-container">
+      <div class="loader"></div>
+      <div class="loading-text">搜索中...</div>
+    </div>
+    
+    <!-- 搜索结果 -->
+    <div v-else>
+      <div v-if="products.length > 0" class="product-container">
+        <div class="product-list">
+          <ProductCard
+            v-for="item in products"
+            :key="item.id"
+            :product="item"
+            class="product-item"
+          />
+        </div>
+      </div>
+      
+      <!-- 无结果状态 -->
+      <div v-else-if="hasSearched" class="no-result">
+        <p>没有找到"{{ keyword }}"相关商品</p>
+        <p class="suggestion">尝试其他关键词，或浏览其他类别商品</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .search-result-page {
+  max-width: 1280px;
+  margin: 0 auto;
   padding: 20px;
-  margin-left: 120px;
 }
 
-.no-data {
-  text-align: center;
-  color: #999;
-  font-size: 18px;
-  margin-top: 50px;
+.page-header {
+  margin-bottom: 24px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.results-count {
+  font-size: 14px;
+  color: #666;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--el-color-primary);
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 16px;
+  color: #666;
+}
+
+.product-container {
+  margin-top: 20px;
 }
 
 .product-list {
   display: flex;
-  flex-wrap: wrap;  /* 允许换行 */
-  gap: 20px;  /* 设置卡片之间的间距 */
-  justify-content: left;  /* 每一行的卡片居中 */
-}
-
-.pagination {
-  padding-left: 40%;
-  text-align: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: flex-start;
   margin-top: 20px;
 }
 
-.category {
+.no-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+}
+
+.no-result-img {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 24px;
+  opacity: 0.7;
+}
+
+.no-result p {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.suggestion {
   font-size: 14px;
-  color: #777;
-  margin-top: 5px;
-  font-style: italic;
+  color: #999;
 }
 </style>

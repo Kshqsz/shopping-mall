@@ -6,13 +6,11 @@ import cn.edu.usts.cs2022.pojo.dto.CountOrderDTO;
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
 import cn.edu.usts.cs2022.pojo.po.Address;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
-import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.po.User;
-import cn.edu.usts.cs2022.pojo.vo.AddressVo;
+import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 import cn.edu.usts.cs2022.service.UserService;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
