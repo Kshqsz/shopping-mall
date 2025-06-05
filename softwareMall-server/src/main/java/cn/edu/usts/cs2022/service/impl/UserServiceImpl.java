@@ -1,14 +1,20 @@
 package cn.edu.usts.cs2022.service.impl;
 
 import cn.edu.usts.cs2022.mapper.UserMapper;
+import cn.edu.usts.cs2022.pojo.dto.AddressDto;
 import cn.edu.usts.cs2022.pojo.dto.CountOrderDTO;
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
+import cn.edu.usts.cs2022.pojo.po.Address;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
+import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.po.User;
+import cn.edu.usts.cs2022.pojo.vo.AddressVo;
 import cn.edu.usts.cs2022.service.UserService;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -97,5 +103,70 @@ public class UserServiceImpl implements UserService {
     @Override
     public Integer countOrder(CountOrderDTO countOrderDTO) {
         return userMapper.countOrder(countOrderDTO);
+    }
+
+    //新增收获地址
+    @Transactional
+    @Override
+    public void addAddress(AddressDto addressDto) {
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("userId");
+        Address address = new Address();
+        address.setUserId(userId);
+        System.out.println(addressDto.toString());
+        address.setName(addressDto.getName());
+        address.setPhone(addressDto.getPhone());
+        address.setDetail(addressDto.getDetail());
+        address.setIsDefault(addressDto.getIsDefault());
+        address.setCity(addressDto.getRegion().get(0));
+        address.setProvince(addressDto.getRegion().get(1));
+        address.setDistrict(addressDto.getRegion().get(2));
+
+        userMapper.addAddress(address);
+        if (address.getIsDefault()){
+            userMapper.unDefault(address);
+            userMapper.setDefault(address);
+        }
+    }
+    //新增地址
+    @Override
+    public List<AddressVo> addressList() {
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("userId");
+        List<AddressVo> addressVos = userMapper.addressList(userId);
+        return addressVos;
+    }
+    //设为默认地址
+    @Override
+    public void toDefault(Integer id) {
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("userId");
+        Address address = new Address();
+        address.setUserId(userId);
+        address.setId(id);
+        userMapper.unDefault(address);
+        userMapper.setDefault(address);
+    }
+
+    //修改地址
+    @Override
+    public void updateAddress(AddressDto addressDto) {
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("userId");
+        Address address = new Address();
+        address.setId(addressDto.getId());
+        address.setUserId(userId);
+        address.setName(addressDto.getName());
+        address.setPhone(addressDto.getPhone());
+        address.setDetail(addressDto.getDetail());
+        address.setIsDefault(addressDto.getIsDefault());
+        address.setCity(addressDto.getRegion().get(0));
+        address.setProvince(addressDto.getRegion().get(1));
+        address.setDistrict(addressDto.getRegion().get(2));
+        userMapper.updateAddress(address);
+        if (address.getIsDefault()){
+            userMapper.unDefault(address);
+            userMapper.setDefault(address);
+        }
     }
 }

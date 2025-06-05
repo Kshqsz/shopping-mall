@@ -89,7 +89,6 @@ public class ProductController {
     //根据条件查询商品简略信息
     @PostMapping("/fetch")
     public Result selectSimpleProductList(@RequestBody ProductSimpleQuery productSimpleQuery) {
-        System.out.println(productSimpleQuery.toString());
         PageResult<ProductSimpleVo> productSimpleVoPageResult = productService.selectSimpleProductList(productSimpleQuery);
         return Result.success(productSimpleVoPageResult);
     }

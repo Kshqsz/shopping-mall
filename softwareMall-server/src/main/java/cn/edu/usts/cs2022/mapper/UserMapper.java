@@ -2,12 +2,11 @@ package cn.edu.usts.cs2022.mapper;
 
 import cn.edu.usts.cs2022.pojo.dto.CountOrderDTO;
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
+import cn.edu.usts.cs2022.pojo.po.Address;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
 import cn.edu.usts.cs2022.pojo.po.User;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import cn.edu.usts.cs2022.pojo.vo.AddressVo;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -53,4 +52,29 @@ public interface UserMapper {
     User getById(Integer id);
 
     Integer countOrder(CountOrderDTO countOrderDTO);
+
+    @Insert("insert into user_address (user_id,receiver,phone,province,city,district,detail,created_at) values " +
+            "(#{userId},#{name},#{phone},#{province},#{city},#{district},#{detail},NOW())")
+    @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
+    void addAddress(Address address);
+
+    //取消默认
+    @Update("update user_address set is_default = false where user_id = #{userId} and is_default = true")
+    void unDefault(Address address);
+    // 设为默认
+    @Update("update user_address set is_default = true where id = #{id}")
+    void setDefault(Address address);
+
+    @Select("SELECT id, receiver as name,phone," +
+            "province,city,district," +
+            " detail,is_default FROM user_address WHERE user_id = #{userId};")
+    List<AddressVo> addressList(Integer userId);
+    //删除地址
+    @Delete("delete from user_address where id = #{id}")
+    void deleteAddress(Integer id);
+
+    //修改地址
+    @Update("update user_address set receiver=#{name},phone=#{phone},province=#{province},city=#{city}," +
+            "district=#{district},detail=#{detail} where id = #{id}")
+    void updateAddress(Address address);
 }

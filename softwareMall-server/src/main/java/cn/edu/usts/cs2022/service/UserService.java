@@ -1,9 +1,12 @@
 package cn.edu.usts.cs2022.service;
 
+import cn.edu.usts.cs2022.pojo.dto.AddressDto;
 import cn.edu.usts.cs2022.pojo.dto.CountOrderDTO;
 import cn.edu.usts.cs2022.pojo.dto.UserUpdateDTO;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
+import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.po.User;
+import cn.edu.usts.cs2022.pojo.vo.AddressVo;
 
 import java.util.List;
 
@@ -38,4 +41,13 @@ public interface UserService {
     User getById(Integer id);
 
     Integer countOrder(CountOrderDTO countOrderDTO);
+
+    void addAddress(AddressDto addressDto);
+
+    List<AddressVo> addressList();
+
+
+    void toDefault(Integer id);
+
+    void updateAddress(AddressDto addressDto);
 }

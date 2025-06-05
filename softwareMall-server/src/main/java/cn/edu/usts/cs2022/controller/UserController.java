@@ -1,12 +1,15 @@
 package cn.edu.usts.cs2022.controller;
 
+import cn.edu.usts.cs2022.mapper.UserMapper;
 import cn.edu.usts.cs2022.pojo.dto.*;
 import cn.edu.usts.cs2022.pojo.po.Favourite;
 import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.po.User;
+import cn.edu.usts.cs2022.pojo.vo.AddressVo;
 import cn.edu.usts.cs2022.service.UserService;
 import cn.edu.usts.cs2022.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.annotations.Delete;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -19,6 +22,7 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final UserMapper userMapper;
 
     /**
      * 用户登录
@@ -128,5 +132,38 @@ public class UserController {
     public Result<User> getById(@PathVariable("id") Integer id) {
         User user = userService.getById(id);
         return Result.success(user);
+    }
+
+    // 新增地址
+    @PostMapping("/addAdderss")
+    public Result addAddress(@RequestBody AddressDto addressDto){
+        userService.addAddress(addressDto);
+        return Result.success();
+    }
+    // 获取所有地址
+    @GetMapping("addressList")
+    public Result<List<AddressVo>> getAddressList(){
+        return Result.success(userService.addressList());
+    }
+
+    //删除地址
+    @DeleteMapping("/address")
+    public Result deleteAddress(@RequestParam Integer id){
+        System.out.println(id);
+        userMapper.deleteAddress(id);
+        return Result.success();
+    }
+    //设置默认
+    @PostMapping("/address")
+    public Result toDefault(@RequestParam Integer id){
+        userService.toDefault(id);
+        return Result.success();
+    }
+    // 地址修改
+    @PostMapping("/updateAddress")
+    public Result updateAddress(@RequestBody AddressDto addressDto){
+        System.out.println(addressDto.toString());
+        userService.updateAddress(addressDto);
+        return Result.success();
     }
 }
