@@ -1,16 +1,28 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { productGetAllService } from '@/api/product'
-import ProductCard from '@/components/ProductCard.vue' // 确保正确导入组件
-import { debounce } from 'lodash-es' // 引入防抖函数
+import ProductCard from '@/components/ProductCard.vue'
+import { debounce } from 'lodash-es'
 
 const route = useRoute()
 const keyword = ref('')
 const products = ref([])
 const loading = ref(false)
-const pageTitle = ref('')
-const hasSearched = ref(false) // 跟踪是否已执行搜索
+const hasSearched = ref(false)
+
+// 分页相关状态
+const currentPage = ref(1)
+const itemsPerPage = 20
+
+// 排序相关状态
+const sortOptions = [
+  { value: 'default', label: '默认' },
+  { value: 'sales-desc', label: '销量' },
+  { value: 'price-asc', label: '价格↑' },
+  { value: 'price-desc', label: '价格↓' }
+]
+const selectedSort = ref('default')
 
 // 获取搜索关键字
 const getKeyword = () => {
@@ -28,11 +40,7 @@ const debouncedSearch = debounce(async () => {
     }
     const res = (await productGetAllService(searchQuery)).data.data
     products.value = res
-    
-    // 更新页面标题
-    pageTitle.value = keyword.value 
-      ? `搜索关键词：${keyword.value}`
-      : '全部商品'
+    currentPage.value = 1 // 重置到第一页
   } catch (error) {
     console.error('搜索失败', error)
   } finally {
@@ -40,6 +48,50 @@ const debouncedSearch = debounce(async () => {
     hasSearched.value = true
   }
 }, 300)
+
+// 排序产品
+const sortedProducts = computed(() => {
+  const productsCopy = [...products.value]
+  
+  switch (selectedSort.value) {
+    case 'sales-desc':
+      return productsCopy.sort((a, b) => (b.totalSales || 0) - (a.totalSales || 0))
+    case 'price-asc':
+      return productsCopy.sort((a, b) => (a.lowPrice || 0) - (b.lowPrice || 0))
+    case 'price-desc':
+      return productsCopy.sort((a, b) => (b.lowPrice || 0) - (a.lowPrice|| 0))
+    default:
+      return productsCopy
+  }
+})
+
+// 分页产品
+const paginatedProducts = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return sortedProducts.value.slice(start, end)
+})
+
+// 总页数
+const totalPages = computed(() => {
+  return Math.ceil(sortedProducts.value.length / itemsPerPage)
+})
+
+// 上一页
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// 下一页
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
 
 // 首次加载
 onMounted(() => {
@@ -55,15 +107,34 @@ watch(
     debouncedSearch()
   }
 )
+
+// 监听排序变化
+watch(selectedSort, () => {
+  currentPage.value = 1 // 排序变化时重置到第一页
+})
 </script>
 
 <template>
   <div class="search-result-page">
     <!-- 页面标题和状态信息 -->
     <div v-if="hasSearched" class="page-header">
-      <h1 class="title">{{ pageTitle }}</h1>
       <div v-if="products.length > 0" class="results-count">
         找到 {{ products.length }} 件商品
+      </div>
+    </div>
+
+    <!-- 排序控件 -->
+    <div v-if="products.length > 0" class="sort-controls">
+      <div class="sort-buttons">
+        <button
+          v-for="option in sortOptions"
+          :key="option.value"
+          @click="selectedSort = option.value"
+          :class="['sort-button', { 'active': selectedSort === option.value }]"
+        >
+          <span class="icon">{{ option.icon }}</span>
+          <span>{{ option.label }}</span>
+        </button>
       </div>
     </div>
 
@@ -75,10 +146,10 @@ watch(
     
     <!-- 搜索结果 -->
     <div v-else>
-      <div v-if="products.length > 0" class="product-container">
+      <div v-if="paginatedProducts.length > 0" class="product-container">
         <div class="product-list">
           <ProductCard
-            v-for="item in products"
+            v-for="item in paginatedProducts"
             :key="item.id"
             :product="item"
             class="product-item"
@@ -90,6 +161,25 @@ watch(
       <div v-else-if="hasSearched" class="no-result">
         <p>没有找到"{{ keyword }}"相关商品</p>
         <p class="suggestion">尝试其他关键词，或浏览其他类别商品</p>
+      </div>
+
+      <!-- 分页控件 -->
+      <div v-if="products.length > itemsPerPage" class="pagination">
+        <button 
+          @click="prevPage" 
+          :disabled="currentPage === 1"
+          class="pagination-button"
+        >
+          上一页
+        </button>
+        <span class="page-info">第 {{ currentPage }} 页 / 共 {{ totalPages }} 页</span>
+        <button 
+          @click="nextPage" 
+          :disabled="currentPage === totalPages"
+          class="pagination-button"
+        >
+          下一页
+        </button>
       </div>
     </div>
   </div>
@@ -116,6 +206,55 @@ watch(
 .results-count {
   font-size: 14px;
   color: #666;
+}
+
+.sort-controls {
+  margin: 20px 0;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  min-width: 80px;
+}
+
+.sort-button:hover {
+  background-color: #f8f8f8;
+  border-color: #d0d0d0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.sort-button.active {
+  background-color: var(--el-color-primary);
+  color: white;
+  border-color: var(--el-color-primary);
+  box-shadow: 0 2px 8px rgba(var(--el-color-primary-rgb), 0.3);
+}
+
+.sort-button .icon {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
 }
 
 .loading-container {
@@ -166,13 +305,6 @@ watch(
   text-align: center;
 }
 
-.no-result-img {
-  width: 200px;
-  height: 200px;
-  margin-bottom: 24px;
-  opacity: 0.7;
-}
-
 .no-result p {
   font-size: 18px;
   color: #666;
@@ -182,5 +314,37 @@ watch(
 .suggestion {
   font-size: 14px;
   color: #999;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 20px;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  background-color: var(--el-color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: var(--el-color-primary-light-3);
+}
+
+.pagination-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #666;
 }
 </style>

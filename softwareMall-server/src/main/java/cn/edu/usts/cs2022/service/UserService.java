@@ -29,9 +29,6 @@ public interface UserService {
      */
     void changeUserStatus(User user);
 
-    List<Favourite> getMyFavourite(Integer userId);
-
-    Integer countFavourite(Integer userId);
 
     void updatePassword(String newPassword);
 
@@ -39,7 +36,6 @@ public interface UserService {
 
     User getById(Integer id);
 
-    Integer countOrder(CountOrderDTO countOrderDTO);
 
     void addAddress(AddressDto addressDto);
 

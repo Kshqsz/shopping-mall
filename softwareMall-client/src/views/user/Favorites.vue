@@ -1,115 +1,275 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { userGetFavouriteService } from '@/api/user';
-import { useUserStore } from '@/stores';
-import { productGetByIdsService } from '@/api/product';
-import { categoryGetAllService } from '@/api/category';
+import { ref, onMounted, computed } from 'vue';
+import { getFavoriteGoods, favoriteDeleteService } from '@/api/favourite';
+import ProductCard from '@/components/ProductCard.vue';
 
-const categories = ref([]);
-const userStore = useUserStore();
-const user = userStore.user;
-const favourites = ref([]);
 
-// 当前页码
-const currentPage = ref(1);
-// 每页展示的数量
-const itemsPerPage = ref(8);
-// 分页后的结果
-const pagedResults = ref([]);
+const favoriteGoods = ref([]);
+const loading = ref(false);
+const selectedProducts = ref(new Set()); // 使用Set存储选中的商品ID
+const isEditMode = ref(false); // 是否处于编辑模式
 
-const getFavourites = async () => {
-  const userId = user.id;
-  const res = await userGetFavouriteService(userId);
-  favourites.value = res.data.data;
-  favourites.value = favourites.value.map(item => item.productId);
+// 计算属性：是否全选
+const isAllSelected = computed({
+  get: () => favoriteGoods.value.length > 0 && 
+        selectedProducts.value.size === favoriteGoods.value.length,
+  set: (val) => {
+    if (val) {
+      favoriteGoods.value.forEach(product => {
+        selectedProducts.value.add(product.id);
+      });
+    } else {
+      selectedProducts.value.clear();
+    }
+  }
+});
 
-  const temp = favourites.value;
-  const res_product = await productGetByIdsService(temp);
-  favourites.value = res_product.data.data;
-  updatePagedResults();  // 更新分页数据
+// 获取收藏商品
+const getFavorites = async () => {
+  try {
+    const res = (await getFavoriteGoods()).data.data;
+    favoriteGoods.value = res;
+  } catch (error) {
+    console.error('获取收藏商品失败', error);
+  }
 };
 
-// 获取分类名称
-const getCategoryName = (id) => {
-  const category = categories.value.find(item => item.id === id);
-  return category ? category.name : "未知分类";
+// 切换编辑模式
+const toggleEditMode = () => {
+  isEditMode.value = !isEditMode.value;
+  if (!isEditMode.value) {
+    selectedProducts.value.clear(); // 退出编辑模式时清空选择
+  }
 };
 
-// 更新分页数据
-const updatePagedResults = () => {
-  const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  pagedResults.value = favourites.value.slice(start, end);
+// 处理单个商品的选择变化
+const handleSelectChange = (productId, isChecked) => {
+  if (isChecked) {
+    selectedProducts.value.add(productId);
+  } else {
+    selectedProducts.value.delete(productId);
+  }
 };
 
-// 监听页码变化
-const pageChange = (page) => {
-  currentPage.value = page;
-  updatePagedResults();
+// 批量取消收藏
+const batchRemove = () => {
+  if (selectedProducts.value.size === 0) {
+    ElMessage.warning('请至少选择一件商品');
+    return;
+  }
+
+  ElMessageBox.confirm('确定要取消收藏选中的商品吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    try {
+      await favoriteDeleteService(Array.from(selectedProducts.value));
+      ElMessage.success('取消收藏成功');
+      selectedProducts.value.clear(); // 清空选择
+      isEditMode.value = false; // 退出编辑模式
+      getFavorites();
+    } catch (error) {
+      console.error('取消收藏失败', error);
+      ElMessage.error('取消收藏失败');
+    }
+  }).catch(() => {
+    // 用户点击了取消
+  });
 };
 
-onMounted(async () => {
-  const category_res = await categoryGetAllService();
-  categories.value = category_res.data.data;
-  await getFavourites();
+onMounted(() => {
+  getFavorites();
 });
 </script>
 
 <template>
   <el-card class="content" shadow="never">
-    <h3>我喜欢的商品</h3>
-    <hr style="margin-top: 40px; opacity: 0.4">
-    <div class="search-result-page">
-      <div v-if="favourites.length === 0" class="no-data">
-        <p>暂无喜欢的产品，快去收藏吧~</p>
+    <div class="header">
+      <h3 class="page-title">我喜欢的商品</h3>
+      <div class="actions">
+        <el-button 
+          v-if="!isEditMode && favoriteGoods.length > 0" 
+          @click="toggleEditMode"
+          type="primary"
+          plain
+        >
+          管理收藏
+        </el-button>
+        <template v-else-if="isEditMode">
+          <el-checkbox 
+            v-model="isAllSelected"
+            :indeterminate="selectedProducts.size > 0 && !isAllSelected"
+            class="select-all"
+          >
+            全选
+          </el-checkbox>
+          <el-button @click="toggleEditMode">取消</el-button>
+          <el-button 
+            type="danger" 
+            :disabled="selectedProducts.size === 0"
+            @click="batchRemove"
+          >
+            取消收藏({{ selectedProducts.size }})
+          </el-button>
+        </template>
       </div>
-      <div v-else class="product-list">
-        <ProductCard
-          v-for="product in pagedResults"
-          :key="product.id"
-          :product="product"
-          :categoryName="getCategoryName(product.categoryId)"
-          :style="{ width: '250px' }"
-        />
+    </div>
+    
+    <el-divider />
+    
+    <!-- 加载状态 -->
+    <div v-if="loading" class="loading-container">
+      <el-icon class="is-loading" :size="30"><Loading /></el-icon>
+      <div class="loading-text">加载中...</div>
+    </div>
+    
+    <!-- 无数据状态 -->
+    <div v-else-if="favoriteGoods.length === 0" class="no-data">
+      <el-empty description="暂无收藏的商品" />
+      <el-button type="primary" @click="$router.push('/home')">去逛逛</el-button>
+    </div>
+    
+    <!-- 商品列表 -->
+    <div v-else class="product-container">
+      <div class="product-list">
+        <div v-for="product in favoriteGoods" :key="product.id" class="product-wrapper">
+          <el-checkbox 
+            v-if="isEditMode"
+            :model-value="selectedProducts.has(product.id)"
+            @change="(val) => handleSelectChange(product.id, val)"
+            class="product-checkbox"
+          />
+          <ProductCard
+            :product="product"
+            class="product-item"
+            :class="{ 'selected': selectedProducts.has(product.id) }"
+          />
+        </div>
       </div>
-
-      <!-- 分页组件 -->
-      <el-pagination
-        v-if="favourites.length > 0"
-        :current-page="currentPage"
-        :page-size="itemsPerPage"
-        :total="favourites.length"
-        layout="prev, pager, next"
-        @current-change="pageChange"
-        class="pagination"
-      />
     </div>
   </el-card>
 </template>
 
 <style scoped>
-.no-data {
-  text-align: center;
-  color: #999;
-  font-size: 18px;
-  margin-top: 50px;
-}
-
-.product-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px; /* 设置卡片之间的间距 */
-  justify-content: left; /* 每一行的卡片居中 */
-}
-
 .content {
   flex: 1;
   padding: 20px;
+  min-height: 60vh;
 }
 
-.pagination {
-  padding-left: 45%;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.select-all {
+  margin-right: 10px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.loading-text {
+  margin-top: 15px;
+  color: #666;
+}
+
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
   text-align: center;
-  margin-top: 20px;
+}
+
+.product-container {
+  margin-top: 10px;
+}
+
+.product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.product-wrapper {
+  position: relative;
+}
+
+.product-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+}
+
+.product-item {
+  width: 100%;
+  max-width: 280px;
+  transition: all 0.3s ease;
+}
+
+.product-item:hover {
+  transform: translateY(-5px);
+}
+
+.product-item.selected {
+  box-shadow: 0 0 0 2px var(--el-color-primary);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .product-list {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .content {
+    padding: 15px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .actions {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 </style>

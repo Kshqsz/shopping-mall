@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.usts.cs2022.mapper.FavoriteMapper">
+
+
+    <insert id="favorite">
+        insert into favorite(user_id, product_id)
+        values (#{userId}, #{productId})
+    </insert>
+
+    <!--获取用户收藏商品-->
+    <select id="getUserFavoriteGoods" resultType="cn.edu.usts.cs2022.pojo.vo.client.ProductClientSimpleVo">
+        SELECT
+        a.id,
+        a.name,
+        a.first_category_id as level1Category,
+        a.first_category_name as level1CategoryName,
+        a.second_category_id as level2Category,
+        a.second_category_name as level2CategoryName,
+        a.image as mainImage,
+        a.merchant_id,
+        a.total_sales,
+        a.low_price as lowPrice,
+        b.shop_name
+        FROM product a
+        LEFT JOIN merchant b ON a.merchant_id = b.id
+        <where>
+            <if test="ids != null and ids.size() > 0">
+                a.id IN
+                <foreach collection="ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="ids == null or ids.size() == 0">
+                1=0
+            </if>
+        </where>
+    </select>
+
+    <!--取消用户收藏商品-->
+    <delete id="cancelFavorite">
+        DELETE FROM favorite
+        WHERE user_id = #{userId}
+        AND product_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

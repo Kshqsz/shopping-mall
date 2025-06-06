@@ -73,10 +73,23 @@ const handleFirstCategoryClick = (category, event) => {
 }
 
 // 点击二级分类
-const handleSecondCategoryClick = (categoryId) => {
-  router.push(`/category/${categoryId}`);
+const handleSecondCategoryClick = (secondCat) => {
+  search(secondCat.name)
   showSubMenu.value = false;
 }
+
+// 搜索方法
+const search = (keywords) => {
+  // 不再检查空值，直接搜索
+  router.push({ 
+    path: '/searchResult', 
+    query: { 
+      q: keywords, // 使用q作为查询参数名
+      t: Date.now() // 添加时间戳防止缓存
+    } 
+  });
+};
+
 
 // 点击页面其他区域关闭二级菜单
 const handleClickOutside = (event) => {
@@ -134,7 +147,7 @@ onMounted(() => {
           v-for="secondCat in activeFirstCategory.children"
           :key="secondCat.id"
           class="second-menu-item"
-          @click.stop="handleSecondCategoryClick(secondCat.id)"
+          @click.stop="handleSecondCategoryClick(secondCat)"
         >
           {{ secondCat.name }}
         </div>
@@ -170,8 +183,9 @@ onMounted(() => {
 
 <style scoped>
 .box-card {
+  width: 1450px;
   padding: 20px 40px;
-  margin: 0 80px;
+  margin-left: 130px;
   border: none;
 }
 
@@ -261,7 +275,7 @@ onMounted(() => {
 .product-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 50px;
   justify-content: flex-start;
   margin-top: 20px;
 }

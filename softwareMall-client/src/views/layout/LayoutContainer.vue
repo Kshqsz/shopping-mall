@@ -14,7 +14,7 @@ const navItems = ref([
   { name: "智能家居", path: "", isSearch: true },
   { name: "生活服务", path: "", isSearch: true },
   { name: "食品生鲜", path: "", isSearch: true },
-  { name: "学习办公", path: "", isSearch: true },
+  { name: "服装鞋靴", path: "", isSearch: true },
 ]);
 
 const router = useRouter()

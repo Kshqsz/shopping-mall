@@ -71,15 +71,6 @@ public class UserServiceImpl implements UserService {
         userMapper.changeStatus(user);
     }
 
-    @Override
-    public List<Favourite> getMyFavourite(Integer userId) {
-        return userMapper.getMyFavourite(userId);
-    }
-
-    @Override
-    public Integer countFavourite(Integer userId) {
-        return userMapper.countFavourite(userId);
-    }
 
     @Override
     public void updatePassword(String newPassword) {
@@ -98,10 +89,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.getById(id);
     }
 
-    @Override
-    public Integer countOrder(CountOrderDTO countOrderDTO) {
-        return userMapper.countOrder(countOrderDTO);
-    }
 
     //新增收获地址
     @Transactional

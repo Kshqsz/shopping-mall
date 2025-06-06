@@ -4,9 +4,7 @@ import { productGetByIdService } from '@/api/product';
 import { onMounted, ref } from 'vue';
 import { categoryGetAllService } from '@/api/category'
 import { useUserStore } from '@/stores';
-import { userGetFavouriteService } from '@/api/user'
-import { favouriteAddService, favouriteDeleteService} from '@/api/favourite'
-import { merchantGeyByProductIdService } from '@/api/merchant.js'
+import { favoriteAddService, favoriteDeleteService, checkFavoriteStatus } from '@/api/favourite'
 import { orderAddService } from '@/api/order'
 import { useRouter } from 'vue-router';
 
@@ -18,12 +16,8 @@ const router = useRouter();
 const productId = route.params.id;
 const product = ref({});
 const categories = ref([]);
-const merchantInfo = ref({
-  id: '',
-  username: '商家名称',
-  avatar: 'https://via.placeholder.com/100'
-});
-const likedProducts = ref([]);
+
+const isFavorite = ref(false); // 使用单独的变量来跟踪收藏状态
 const showDialog = ref(false);
 const orderInfo = ref({
   name: "",
@@ -39,11 +33,9 @@ const confirmOrder = async () => {
     const res = await orderAddService({
       userId,
       productId,
-      merchantId: merchantInfo.value.id,
       specId: selectedSpec.value.id // 添加规格ID
     });
     const order = res.data.data;
-    // eslint-disable-next-line no-undef
     ElMessage.success('订单创建成功！即将跳转到支付页面...');
     showDialog.value = false;
     setTimeout(() => {
@@ -55,14 +47,12 @@ const confirmOrder = async () => {
       });
     }, 1000);
   } catch (error) {
-    // eslint-disable-next-line no-undef
-    ElMessage.error('订单创建失败，请稍后再试！');
+    ElMessage.error('订单创建失败，请稍后再试！'+error);
   }
 };
 
 const showOrderDialog = () => {
   if (!selectedSpec.value) {
-    // eslint-disable-next-line no-undef
     ElMessage.warning('请选择商品规格');
     return;
   }
@@ -72,24 +62,20 @@ const showOrderDialog = () => {
     image: selectedSpec.value.image,
     price: selectedSpec.value.price,
     categoryName: `${product.value.level1CategoryName}/${product.value.level2CategoryName}`,
-    merchantName: merchantInfo.value.username,
   };
   showDialog.value = true;
 };
 
-const getMerchant = async () => {
-  const res = await merchantGeyByProductIdService(productId);
-  merchantInfo.value = res.data.data;
-}
-
-const getFavourites = async () => {
-  const favourite_res = await userGetFavouriteService(userId);
-  likedProducts.value = favourite_res.data.data.map(item => item.productId);
-}
-
-const getCategoryName = (id) => {
-  const category = categories.value.find(item => item.id === id);
-  return category ? category.name : "未知分类";
+// 检查收藏状态
+const checkFavorite = async () => {
+  try {
+    const res = await checkFavoriteStatus(productId);
+    console.log(res)
+    isFavorite.value = res.data.data; // 假设返回的是boolean值
+  } catch (error) {
+    console.error('检查收藏状态失败', error);
+    isFavorite.value = false;
+  }
 };
 
 onMounted(async () => {
@@ -104,25 +90,23 @@ onMounted(async () => {
   const category_res = await categoryGetAllService();
   categories.value = category_res.data.data;
 
-  getFavourites();
-  getMerchant();
+  await checkFavorite(); // 初始化时检查收藏状态
 });
 
-const has = () => {
-  return likedProducts.value.includes(productId);
-}
-
-const toggleLike = async (productId) => {
-  if (has()) {
-    await favouriteDeleteService(productId);
-    await getFavourites();
-    // eslint-disable-next-line no-undef
-    ElMessage.success("取消收藏成功~")
-  } else {
-    await favouriteAddService(productId);
-    await getFavourites();
-    // eslint-disable-next-line no-undef
-    ElMessage.success("收藏成功~")
+const toggleLike = async () => {
+  try {
+    if (isFavorite.value) {
+      await favoriteDeleteService(productId);
+      ElMessage.success("取消收藏成功~");
+    } else {
+      await favoriteAddService(productId);
+      ElMessage.success("收藏成功~");
+    }
+    // 更新收藏状态
+    await checkFavorite();
+  } catch (error) {
+    console.error('操作收藏失败', error);
+    ElMessage.error('操作失败，请稍后再试');
   }
 };
 
@@ -183,14 +167,14 @@ const selectSpec = (spec) => {
         <div class="product-actions">
           <button class="buy-button" @click="showOrderDialog">立即购买</button>
           <button 
-            :class="{'like-button': true, 'liked': has()}"
-            @click.stop="toggleLike(productId)"
+            :class="{'like-button': true, 'liked': isFavorite}"
+            @click.stop="toggleLike"
           >
             <i
-              :class="has() ? 'fas fa-heart' : 'far fa-heart'"
+              :class="isFavorite ? 'fas fa-heart' : 'far fa-heart'"
               class="like-icon"
             ></i>
-            收藏
+            {{ isFavorite ? '已收藏' : '收藏' }}
           </button>
         </div>
       </div>
@@ -238,6 +222,7 @@ const selectSpec = (spec) => {
 </template>
 
 <style scoped>
+/* 样式保持不变，与之前相同 */
 .product-detail-page {
   padding: 20px;
   max-width: 1200px;

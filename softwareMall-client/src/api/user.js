@@ -10,8 +10,8 @@ export const userRegisterService = ({ username, password, rePassword }) => {
     return request.post("/user/register", { username, password, rePassword})
 }
 
-export const userGetFavouriteService = (userId) => {
-    return request.get(`/user/myFavourite/${userId}`)
+export const userGetFavoriteService = (userId) => {
+    return request.get(`/user/myFavorite/${userId}`)
 }
 
 export const userCountFavouriteService = (userId) => {

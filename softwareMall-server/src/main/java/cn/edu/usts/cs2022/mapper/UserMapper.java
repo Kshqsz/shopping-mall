@@ -36,12 +36,6 @@ public interface UserMapper {
     @Update("UPDATE user set status = #{status} where id = #{id}")
     void changeStatus(User user);
 
-    @Select("select * from favourite where user_id = #{userId}")
-    List<Favourite> getMyFavourite(Integer userId);
-
-    @Select("select count(*) from favourite where user_id = #{userId}")
-    Integer countFavourite(Integer userId);
-
     @Update("update user set password = #{newPassword} where id = #{userId}")
     void updatePassword(@Param("userId") Integer userId,
                         @Param("newPassword") String newPassword);
@@ -51,7 +45,6 @@ public interface UserMapper {
     @Select("select * from user where id = #{id}")
     User getById(Integer id);
 
-    Integer countOrder(CountOrderDTO countOrderDTO);
 
     @Insert("insert into user_address (user_id,receiver,phone,province,city,district,detail,created_at) values " +
             "(#{userId},#{name},#{phone},#{province},#{city},#{district},#{detail},NOW())")

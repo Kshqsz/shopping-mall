@@ -93,23 +93,6 @@ public class UserController {
         return Result.success("修改成功");
     }
 
-    @GetMapping("/myFavourite/{id}")
-    public Result<List<Favourite>> getMyFavourite(@PathVariable("id") Integer userId) {
-        List<Favourite> favourites = userService.getMyFavourite(userId);
-        return Result.success(favourites);
-    }
-
-    @PostMapping("/countOrder")
-    public Result<Integer> countOrder(@RequestBody CountOrderDTO countOrderDTO) {
-        Integer count = userService.countOrder(countOrderDTO);
-        return Result.success(count);
-    }
-    @GetMapping("/countFavourite/{id}")
-    public Result<Integer> countFavourite(@PathVariable("id") Integer userId) {
-        Integer count = userService.countFavourite(userId);
-        return Result.success(count);
-    }
-
     @PostMapping("/updatePassword")
     public Result updatePassword(@RequestBody UpdatePasswordDTO updatePasswordDTO) {
         String newPassword = updatePasswordDTO.getPassword();

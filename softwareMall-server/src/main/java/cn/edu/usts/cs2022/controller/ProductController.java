@@ -43,6 +43,7 @@ public class ProductController {
     //根据条件获取商品信息
     @PostMapping("/all")
     public Result<List<ProductClientSimpleVo>> getAllProduct(@RequestBody ProductClientQuery productClientQuery) {
+        System.out.println(productClientQuery.toString());
         List<ProductClientSimpleVo> productList = productService.getAllProduct(productClientQuery);
         return Result.success(productList);
     }
