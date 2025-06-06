@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.usts.cs2022.mapper.CartMapper">
+    <select id="selectCartList" resultType="cn.edu.usts.cs2022.pojo.vo.client.CartListVo">
+        SELECT
+            c.id as cartId,
+            c.quantity,
+            p.id as productId,
+            p.name as productName,
+            s.price,
+            s.id as specId,
+            s.name as specName,
+            s.image
+        FROM
+            cart c
+                INNER JOIN
+            product p ON   p.id = c.product_id
+                INNER JOIN
+            spec_item s ON  s.id = c.spec_id
+        WHERE
+            c.user_id = #{userId} and p.status = 1
+    </select>
+</mapper>

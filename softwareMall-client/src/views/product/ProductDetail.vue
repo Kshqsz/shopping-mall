@@ -7,6 +7,7 @@ import { useUserStore } from '@/stores';
 import { favoriteAddService, favoriteDeleteService, checkFavoriteStatus } from '@/api/favourite'
 import { orderAddService } from '@/api/order'
 import { useRouter } from 'vue-router';
+import { addToCart } from '@/api/cart';
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -114,6 +115,28 @@ const toggleLike = async () => {
 const selectSpec = (spec) => {
   selectedSpec.value = spec;
 };
+// 加入购物车
+const addToCartHandler = async () => {
+  if (!selectedSpec.value) {
+    ElMessage.warning('请选择商品规格');
+    return;
+  }
+  
+  try {
+    await addToCart({
+      userId,
+      productId,
+      specId: selectedSpec.value.id,
+      quantity: 1
+    });
+    // eslint-disable-next-line no-undef
+    ElMessage.success('已加入购物车');
+  } catch (error) {
+    console.error('加入购物车失败', error);
+    // eslint-disable-next-line no-undef
+    ElMessage.error('加入购物车失败');
+  }
+};
 </script>
 
 <template>
@@ -129,6 +152,20 @@ const selectSpec = (spec) => {
       </div>
 
       <div class="product-info">
+        <!-- 右上角收藏按钮 -->
+        <div class="favorite-button-container">
+          <button 
+            :class="{'favorite-button': true, 'liked': isFavorite}"
+            @click.stop="toggleLike"
+          >
+            <i
+              :class="isFavorite ? 'fas fa-heart' : 'far fa-heart'"
+              class="like-icon"
+            ></i>
+            {{ isFavorite ? '已收藏' : '收藏' }}
+          </button>
+        </div>
+
         <h2 class="product-title">{{ product.name }}</h2>
         <p class="product-category">
           {{ product.level1CategoryName }} > {{ product.level2CategoryName }}
@@ -167,14 +204,10 @@ const selectSpec = (spec) => {
         <div class="product-actions">
           <button class="buy-button" @click="showOrderDialog">立即购买</button>
           <button 
-            :class="{'like-button': true, 'liked': isFavorite}"
-            @click.stop="toggleLike"
+            class="cart-button"
+            @click="addToCartHandler"
           >
-            <i
-              :class="isFavorite ? 'fas fa-heart' : 'far fa-heart'"
-              class="like-icon"
-            ></i>
-            {{ isFavorite ? '已收藏' : '收藏' }}
+            加入购物车
           </button>
         </div>
       </div>
@@ -222,7 +255,6 @@ const selectSpec = (spec) => {
 </template>
 
 <style scoped>
-/* 样式保持不变，与之前相同 */
 .product-detail-page {
   padding: 20px;
   max-width: 1200px;
@@ -407,27 +439,7 @@ const selectSpec = (spec) => {
   background-color: #f57c00;
 }
 
-.like-button {
-  background-color: #f5f5f5;
-  color: #666;
-  flex: 1;
-  border: 1px solid #ddd;
-}
 
-.like-button:hover {
-  background-color: #eee;
-}
-
-.like-button.liked {
-  background-color: #fff0f0;
-  color: #f44336;
-  border-color: #f44336;
-}
-
-.like-icon {
-  margin-right: 8px;
-  font-size: 16px;
-}
 
 .video-player-section {
   margin: 40px 0;
@@ -454,4 +466,66 @@ const selectSpec = (spec) => {
   object-fit: cover;
   margin-bottom: 20px;
 }
+.favorite-button-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+}
+
+.favorite-button {
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.favorite-button:hover {
+  background-color: #fff;
+}
+
+.favorite-button.liked {
+  background-color: #fff0f0;
+  color: #f44336;
+  border-color: #f44336;
+}
+
+.like-icon {
+  margin-right: 6px;
+}
+
+.product-info {
+  position: relative; /* 为收藏按钮定位提供参考 */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+}
+
+.cart-button {
+  padding: 12px 30px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  background-color: #666;
+  color: #f5f5f5
+}
+
+.cart-button:hover {
+  background-color: #645e5e;
+}
+
 </style>

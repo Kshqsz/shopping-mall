@@ -54,10 +54,11 @@ const handleSelectChange = (productId, isChecked) => {
 // 批量取消收藏
 const batchRemove = () => {
   if (selectedProducts.value.size === 0) {
+    // eslint-disable-next-line no-undef
     ElMessage.warning('请至少选择一件商品');
     return;
   }
-
+// eslint-disable-next-line no-undef
   ElMessageBox.confirm('确定要取消收藏选中的商品吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -65,12 +66,14 @@ const batchRemove = () => {
   }).then(async () => {
     try {
       await favoriteDeleteService(Array.from(selectedProducts.value));
+      // eslint-disable-next-line no-undef
       ElMessage.success('取消收藏成功');
       selectedProducts.value.clear(); // 清空选择
       isEditMode.value = false; // 退出编辑模式
       getFavorites();
     } catch (error) {
       console.error('取消收藏失败', error);
+      // eslint-disable-next-line no-undef
       ElMessage.error('取消收藏失败');
     }
   }).catch(() => {

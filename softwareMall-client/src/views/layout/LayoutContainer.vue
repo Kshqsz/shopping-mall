@@ -1,12 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router';
-import { ArrowDown, Search, User, SwitchButton } from '@element-plus/icons-vue'
+import { ArrowDown, Search, ShoppingCart, SwitchButton } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores';
 import { ElMessage } from 'element-plus';
 
 const searchKeyword = ref('') // 修改为字符串类型的搜索关键词
-
 const dialogTableVisible = ref(false)
 const navItems = ref([
   { name: "首页", path: "/home", isSearch: false },
@@ -61,10 +60,29 @@ const goToHome = () => {
 
 const gridData = [
   { name: '韩守坤', from: '苏州科技大学', email: '2456480538@qq.com'},
-  { name: '韦辉', from: '苏州科技大学', email: '2949621931@qq.com'},
+  { name: '韦辉', from: '苏州科技大学', email: '3244432308@qq.com'},
   { name: '吴纡怀', from: '苏州科技大学', email: '1085406285@qq.com'},
   { name: '陈松', from: '苏州科技大学', email: '2220834872@qq.com'},
 ]
+
+// 在原有代码中添加购物车相关逻辑
+const cartItemCount = ref(0) // 购物车商品数量
+// 获取购物车商品数量（假设有对应的API）
+const getCartItemCount = async () => {
+  try {
+    // 这里假设有一个获取购物车商品数量的API
+    // const res = await getCartCount()
+    // cartItemCount.value = res.data.count
+    cartItemCount.value = 3 // 模拟数据
+  } catch (error) {
+    console.error('获取购物车数量失败', error)
+  }
+}
+// 跳转到购物车页面
+const goToCart = () => {
+  router.push('/cart')
+}
+getCartItemCount()
 </script>
 
 <template>
@@ -102,6 +120,11 @@ const gridData = [
 
       <!-- 右侧功能区 -->
       <div class="nav-right">
+        <!-- 购物车图标 -->
+        <div class="cart-icon" @click="goToCart">
+            <el-icon :size="24"><shopping-cart /></el-icon>
+          <span class="cart-text">购物车</span>
+        </div>
         <!-- 搜索框 - 添加按钮和回车事件 -->
         <div class="search-container">
           <el-input
@@ -163,8 +186,8 @@ const gridData = [
   display: flex;
   align-items: center;
   justify-content: space-between;
+  overflow: hidden;
   height: 80px;
-  padding: 0 40px;
   background-color: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
@@ -200,7 +223,8 @@ const gridData = [
 }
 
 .nav-item {
-  padding: 0 20px;
+  overflow: hidden;
+  margin-left: 40px;
   height: 80px;
   line-height: 80px;
   font-size: 16px;
@@ -287,55 +311,44 @@ const gridData = [
   background-color: #f5f7fa;
 }
 
+
+
+
+/* 添加购物车相关样式 */
+.cart-icon {
+  display: flex;
+  align-items: center;
+  margin-right: 30px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.cart-icon:hover {
+  background-color: #f5f7fa;
+}
+
+.cart-text {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.cart-badge {
+  margin-right: 10px;
+}
+
 /* 响应式调整 */
-@media (max-width: 1200px) {
-  .top-nav {
-    padding: 0 20px;
-  }
-  
-  .nav-item {
-    padding: 0 15px;
-  }
-  
-  .search-box {
-    width: 200px;
-  }
-}
-
-@media (max-width: 992px) {
-  .nav-item {
-    padding: 0 10px;
-    font-size: 15px;
-  }
-}
-
 @media (max-width: 768px) {
-  .top-nav {
-    flex-wrap: wrap;
-    height: auto;
-    padding: 10px;
+  .cart-icon {
+    margin-right: 15px;
   }
   
-  .nav-left, .nav-right {
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 10px;
-  }
-  
-  .nav-menu {
-    order: 3;
-    width: 100%;
-    overflow-x: auto;
-    padding: 10px 0;
-  }
-  
-  .search-container {
-    width: 100%;
-    margin-right: 0;
-  }
-  
-  .search-box {
-    width: 100%;
+  .cart-text {
+    display: none;
   }
 }
+
+
 </style>
