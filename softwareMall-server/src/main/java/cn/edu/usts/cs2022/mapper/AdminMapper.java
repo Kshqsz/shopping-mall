@@ -25,5 +25,7 @@ public interface AdminMapper {
     @Select("select * from merchant")
     List<Merchant> selectMerchant();
 
+    @Select("select * from merchant where id = #{id}")
+    Merchant selectMerchantById(Integer id);
 
 }

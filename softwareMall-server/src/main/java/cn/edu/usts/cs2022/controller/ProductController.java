@@ -104,7 +104,6 @@ public class ProductController {
     // 查询待修改商品信息
     @GetMapping("/editDetail/{id}")
     public Result<ProductEditDetailVo> selectEditDetailProduct(@PathVariable Integer id) {
-        System.out.println(1);
         return Result.success(productService.selectEditDetailProduct(id));
     }
 

@@ -1,17 +1,23 @@
 import request from '@/utils/request.js'
-
-export const orderAddService = ({ userId, productId, merchantId}) => {
-    return request.post("/order/add", {userId, productId, merchantId})
+//新增订单
+export const orderAddService = (order) => {
+    return request.post("/order/add", order)
 }
-
-export const orderCancelService = (orderNumber) => {
-    return request.post(`/order/cancel/${orderNumber}`)
+//取消订单
+export const orderCancelService = (orderId) => {
+    return request.post(`/order/cancel/${orderId}`)
 }
 
 export const orderAllService = () => {
     return request.get("/order/all")
 }
 
-export const orderPayService = (orderNumber) => {
-    return request.post(`/order/pay/${orderNumber}`)
+// 支付订单
+export const orderPayService = (id) => {
+    return request.post(`/order/pay/${id}`)
+}
+
+// 查询订单
+export const getOrderList = (searchQuery) => {
+    return request.post('/order/client/list',searchQuery)
 }

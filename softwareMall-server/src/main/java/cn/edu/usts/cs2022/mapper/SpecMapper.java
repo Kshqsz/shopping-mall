@@ -84,4 +84,15 @@ public interface SpecMapper {
     // 删除规格名
     @Delete("DELETE FROM spec_name WHERE goods_id = #{goodsId}")
     void deleteSpecNamesByGoodsId(@Param("goodsId") Long goodsId);
+
+    //根据规格项Id查询规格信息
+    @Select("SELECT * FROM spec_item WHERE id = #{id}")
+    SpecItem selectSpecItemsById(Integer id);
+
+    //查询库存信息
+    @Select("select stock from spec_item where id = #{id}")
+    Integer getStock(Integer specId);
+
+    @Update("update spec_item set stock = #{newStock} where id = #{specId}")
+    void updateStock(@Param("specId") Integer specId, @Param("newStock") Integer newStock);
 }

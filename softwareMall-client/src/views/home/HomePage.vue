@@ -183,9 +183,9 @@ onMounted(() => {
 
 <style scoped>
 .box-card {
-  width: 1450px;
+  width: 1350px;
   padding: 20px 40px;
-  margin-left: 130px;
+  margin: 0 auto;
   border: none;
 }
 
@@ -275,7 +275,7 @@ onMounted(() => {
 .product-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 50px;
+  gap: 20px;
   justify-content: flex-start;
   margin-top: 20px;
 }

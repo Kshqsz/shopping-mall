@@ -440,27 +440,46 @@ const initializeFormData = async () => {
 }
 // 生成规格组合（笛卡尔积）
 const generateSpecCombinations = () => {
+  // 确保规格数组存在
+  if (!formData.value.specs || !Array.isArray(formData.value.specs)) {
+    formData.value.specs = []
+  }
+
   // 如果规格为空，清空组合
   if (!formData.value.specs || formData.value.specs.length === 0) {
     specCombinations.value = [];
     return;
   }
   
-  // 获取所有规格值的数组
-  const specValuesArrays = formData.value.specs.map(spec => spec.values);
+   // 获取所有规格值的数组
+  const specValuesArrays = formData.value.specs.map(spec => {
+    if (!spec.values || !Array.isArray(spec.values)) {
+      return []
+    }
+    return spec.values
+  })
   
   // 计算笛卡尔积
   let combinations = [];
   
   const calculateCombinations = (current, index) => {
     if (index === specValuesArrays.length) {
-      combinations.push({
-        specValues: [...current],
-        price: 0,
-        stock: 0,
-        image: ''
-      });
-      return;
+      // 尝试找到现有的匹配项
+      const existingCombination = specCombinations.value.find(item => 
+        item.specValues.length === current.length &&
+        item.specValues.every((v, i) => v === current[i])
+      )
+      
+      combinations.push(
+        existingCombination || {
+          specValues: [...current],
+          price: 0,
+          stock: 0,
+          image: '',
+          id: null
+        }
+      )
+      return
     }
     
     specValuesArrays[index].forEach(value => {
@@ -554,6 +573,10 @@ const generateCombinations = () => {
 }
 // 添加规格
 const addSpecName = () => {
+  // 确保规格数组存在
+  if (!formData.value.specs || !Array.isArray(formData.value.specs)) {
+    formData.value.specs = []
+  }
   formData.value.specs.push({
     name: '',
     values: [],

@@ -1,6 +1,7 @@
 package cn.edu.usts.cs2022.mapper;
 
 import cn.edu.usts.cs2022.pojo.po.Order;
+import cn.edu.usts.cs2022.pojo.query.OrderClientQuery;
 import cn.edu.usts.cs2022.pojo.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,16 +24,19 @@ public interface OrderMapper {
     int add(Order order);
 
 
+
+    //取消订单
+    @Update("update orders set status = 5 ,cancel_time = NOW() where id =  #{id}")
+    void cancel(@Param("id") Integer id);
+
+    @Select("select * from orders where id = #{id}")
     Order getById(Integer id);
 
-    @Update("update `order` set status = -1 where order_number =  #{orderNumber}")
-    void cancel(@Param("orderNumber") String orderNumber);
+    @Update("update orders set status = 1 ,payment_time = NOW() where id = #{id}")
+    void pay(Integer id);
 
-    @Select("select * from `order` where order_number = #{orderNumber}")
-    Order getByNumber(@Param("orderNumber") String orderNumber);
 
-    @Update("update `order` set status = 1 where order_number = #{orderNumber}")
-    void pay(String orderNumber);
 
-    List<OrderVO> selectOrderWithPrice();
+
+    List<Order> selectClientOrderList(OrderClientQuery orderClientQuery);
 }

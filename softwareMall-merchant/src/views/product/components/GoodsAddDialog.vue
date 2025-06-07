@@ -307,7 +307,7 @@ import { Plus, VideoPlay, Delete, Picture } from '@element-plus/icons-vue'
 import {firstCategoryList,secondCategoryList} from '@/api/category'
 import { uploadFile } from '@/api/file'
 import { addGoods } from '@/api/product'
-import { ElMessage } from 'element-plus' 
+
 
 const dialogVisible = defineModel()
 const formRef = ref(null)
@@ -486,7 +486,23 @@ const uploadVideo = async (fileObj) => {
 
 const submit = async () => {
   await formRef.value.validate()
+  if (form.specs.length === 0) {
+    ElMessage.warning('请至少添加一个规格信息')
+    return
+  }
+
+  // 检查规格组合是否完整
+  let isSpecValid = true
+  form.specs.forEach(spec => {
+    if (!spec.name || spec.values.length === 0) {
+      isSpecValid = false
+    }
+  })
   
+  if (!isSpecValid) {
+    ElMessage.warning('请完善所有规格的名称和值')
+    return
+  }
   // 整理数据
   const productData = {
     name: form.name,

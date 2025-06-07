@@ -26,5 +26,7 @@ public class Merchant {
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;
+
+    private String shopName;
 }
 

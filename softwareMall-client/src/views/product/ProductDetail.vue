@@ -1,13 +1,14 @@
 <script setup>
 import { useRoute } from 'vue-router';
 import { productGetByIdService } from '@/api/product';
-import { onMounted, ref } from 'vue';
-import { categoryGetAllService } from '@/api/category'
+import { onMounted, ref,watch } from 'vue';
 import { useUserStore } from '@/stores';
 import { favoriteAddService, favoriteDeleteService, checkFavoriteStatus } from '@/api/favourite'
 import { orderAddService } from '@/api/order'
 import { useRouter } from 'vue-router';
 import { addToCart } from '@/api/cart';
+import { addressList } from '@/api/user';
+import { codeToText } from 'element-china-area-data';
 
 const route = useRoute();
 const userStore = useUserStore();
@@ -16,56 +17,11 @@ const router = useRouter();
 
 const productId = route.params.id;
 const product = ref({});
-const categories = ref([]);
+
 
 const isFavorite = ref(false); // 使用单独的变量来跟踪收藏状态
 const showDialog = ref(false);
-const orderInfo = ref({
-  name: "",
-  image: "",
-  price: 0,
-  categoryName: "",
-  merchantName: "",
-});
 const selectedSpec = ref(null); // 当前选中的规格
-
-const confirmOrder = async () => {
-  try {
-    const res = await orderAddService({
-      userId,
-      productId,
-      specId: selectedSpec.value.id // 添加规格ID
-    });
-    const order = res.data.data;
-    ElMessage.success('订单创建成功！即将跳转到支付页面...');
-    showDialog.value = false;
-    setTimeout(() => {
-      router.push({
-        path: '/payment',
-        query: {
-          order: JSON.stringify(order),
-        },
-      });
-    }, 1000);
-  } catch (error) {
-    ElMessage.error('订单创建失败，请稍后再试！'+error);
-  }
-};
-
-const showOrderDialog = () => {
-  if (!selectedSpec.value) {
-    ElMessage.warning('请选择商品规格');
-    return;
-  }
-  
-  orderInfo.value = {
-    name: `${product.value.name} ${selectedSpec.value.name}`,
-    image: selectedSpec.value.image,
-    price: selectedSpec.value.price,
-    categoryName: `${product.value.level1CategoryName}/${product.value.level2CategoryName}`,
-  };
-  showDialog.value = true;
-};
 
 // 检查收藏状态
 const checkFavorite = async () => {
@@ -87,9 +43,6 @@ onMounted(async () => {
   if (product.value.specItemVos && product.value.specItemVos.length > 0) {
     selectedSpec.value = product.value.specItemVos[0];
   }
-
-  const category_res = await categoryGetAllService();
-  categories.value = category_res.data.data;
 
   await checkFavorite(); // 初始化时检查收藏状态
 });
@@ -137,6 +90,116 @@ const addToCartHandler = async () => {
     ElMessage.error('加入购物车失败');
   }
 };
+// 支付相关
+// 地址数据
+const userAddresses = ref([]);
+const showOrderDialog = async() => {
+  const addresses =  (await addressList()).data.data
+  userAddresses.value = addresses
+
+  orderInfo.value = {
+    name: `${product.value.name} ${selectedSpec.value.name}`,
+    image: selectedSpec.value.image,
+    price: selectedSpec.value.price,
+    categoryName: `${product.value.level1CategoryName}/${product.value.level2CategoryName}`,
+  };
+  showDialog.value = true;
+};
+
+// 订单信息
+const orderInfo = ref({
+  name: "",
+  image: "",
+  price: 0,
+  quantity: 1, // 默认购买数量
+  addressId: null,
+  paymentMethod: "alipay"
+});
+
+const totalPrice = ref(0); // 总价（商品总价 + 运费）
+
+// 计算总价
+const updateTotalPrice = () => {
+  const basePrice = orderInfo.value.price * orderInfo.value.quantity;
+  totalPrice.value = basePrice
+};
+
+// 格式化地址显示
+const formatAddress = (address) => {
+  return `${address.name} ${address.phone} ${codeToText[address.city]} ${codeToText[address.province]} ${codeToText[address.district]}${address.detail}`;
+};
+
+// 管理地址
+const goToAddress = () => {
+  router.push('/address');
+};
+
+// 提交订单
+const submitOrder = async () => {
+  // 验证地址是否已选择
+  if (!orderInfo.value.addressId) {
+    // eslint-disable-next-line no-undef
+    ElMessage.warning('请选择收货地址');
+    return;
+  }
+  
+   try {
+    // 生成订单编号 (格式: ORD + 年月日 + 4位随机数)
+    const generateOrderNo = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      return `ORD${year}${month}${day}${randomNum}`;
+    };
+
+    const orderData = {
+      orderNo: generateOrderNo(), // 前端生成的订单编号
+      userId: userId,
+      merchantId: product.value.merchantId,
+      productId: productId,
+      specId: selectedSpec.value.id,
+      productPrice: orderInfo.value.price, // 商品单价
+      quantity: orderInfo.value.quantity,
+      totalAmount: totalPrice.value,
+      addressId: orderInfo.value.addressId
+    };
+
+    const res = (await orderAddService(orderData)) 
+    
+    const order = res.data.data;
+    ElMessage.success('订单创建成功！即将跳转到支付页面...');
+    showDialog.value = false;
+    
+    // 这里通常会跳转到支付页面
+    setTimeout(() => {
+      router.push({
+        path: '/payment',
+        query: {
+          order: JSON.stringify(order),
+        },
+      });
+    }, 500);
+  } catch (error) {
+    ElMessage.error('订单创建失败，请稍后再试！'+error);
+  }
+};
+
+// 当显示弹窗时初始化数据
+watch(showDialog, (visible) => {
+  if (visible) {
+    const basePrice = selectedSpec.value ? selectedSpec.value.price : product.value.lowPrice;
+    orderInfo.value = {
+      name: `${product.value.name}${selectedSpec.value ? ' ' + selectedSpec.value.name : ''}`,
+      image: selectedSpec.value ? selectedSpec.value.image : product.value.mainImage,
+      price: basePrice,
+      quantity: 1,
+      addressId: userAddresses.value.find(addr => addr.isDefault)?.id || null,
+    };
+    updateTotalPrice();
+  }
+});
 </script>
 
 <template>
@@ -234,23 +297,91 @@ const addToCartHandler = async () => {
     </div>
     
     <el-dialog
-      v-model="showDialog"
-      title="确认订单"
-      width="500px"
-      :close-on-click-modal="false"
-    >
-      <div class="dialog-content">
-        <img :src="orderInfo.image" alt="Product Image" class="dialog-image" />
-        <p><strong>商品名称：</strong>{{ orderInfo.name }}</p>
-        <p><strong>分类名称：</strong>{{ orderInfo.categoryName }}</p>
-        <p><strong>商家名称：</strong>{{ orderInfo.merchantName }}</p>
-        <p><strong>价格：</strong>￥{{ orderInfo.price }}</p>
+    v-model="showDialog"
+    title="订单确认"
+    width="600px"
+    :close-on-click-modal="false"
+    class="payment-dialog"
+  >
+    <div class="pd-container">
+      <!-- 商品信息区域 -->
+      <div class="pd-product-info">
+        <div class="pd-product-image">
+          <img 
+            :src="orderInfo.image || product.mainImage" 
+            alt="商品图片" 
+            class="pd-thumb"
+          />
+        </div>
+        <div class="pd-details">
+          <h3 class="pd-product-name">{{ orderInfo.name || product.name }}</h3>
+          <div class="pd-spec">
+            <span v-if="selectedSpec">规格：{{ selectedSpec.name }}</span>
+          </div>
+          <div class="pd-price">
+            单价：<span class="pd-price-value">￥{{ orderInfo.price || selectedSpec.price || product.lowPrice }}</span>
+          </div>
+        </div>
       </div>
-      <template #footer>
-        <el-button @click="showDialog = false">取消</el-button>
-        <el-button type="primary" @click="confirmOrder">确认下单</el-button>
-      </template>
-    </el-dialog>
+      
+      <!-- 订单信息区域 -->
+      <div class="pd-order-info">
+        <div class="pd-form-item">
+          <label class="pd-form-label">购买数量：</label>
+          <el-input-number 
+            v-model="orderInfo.quantity" 
+            :min="1" 
+            :max="selectedSpec ? selectedSpec.stock : 100" 
+            size="medium"
+            controls-position="right"
+            @change="updateTotalPrice"
+          />
+          <span class="pd-stock-tip">
+            <span v-if="selectedSpec">库存：{{ selectedSpec.stock }}件</span>
+          </span>
+        </div>
+        
+        <div class="pd-form-item">
+          <label class="pd-form-label">收货地址：</label>
+          <el-select 
+            v-model="orderInfo.addressId" 
+            placeholder="请选择收货地址"
+            class="pd-address-select"
+          >
+            <el-option
+              v-for="address in userAddresses"
+              :key="address.id"
+              :label="formatAddress(address)"
+              :value="address.id"
+            >
+              <div class="pd-address-option">
+                <div class="pd-address-main">
+                  <span class="pd-recipient">{{ address.name }}</span>
+                  <span class="pd-phone">{{ address.phone }}</span>
+                  <div class="pd-address-detail">{{ codeToText[address.city] + codeToText[address.province] + codeToText[address.district] + address.detail }}</div>
+                  <el-tag v-if="address.isDefault" size="small">默认</el-tag>
+                </div>
+                
+              </div>
+            </el-option>
+          </el-select>
+          <el-button type="text" class="pd-manage-address" @click="goToAddress">管理地址</el-button>
+        </div>
+        
+        <div class="pd-form-item pd-payment-info">
+          <div class="pd-payment-total">
+            <span class="pd-payment-label">应付总额：</span>
+            <span class="pd-payment-value pd-total-price">￥{{ totalPrice.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <template #footer>
+      <el-button @click="showDialog = false">取消</el-button>
+      <el-button type="primary" @click="submitOrder">去支付</el-button>
+    </template>
+  </el-dialog>
   </div>
 </template>
 
@@ -454,18 +585,6 @@ const addToCartHandler = async () => {
   margin-top: 20px;
 }
 
-.dialog-content {
-  text-align: left;
-  font-size: 16px;
-}
-
-.dialog-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 6px;
-  object-fit: cover;
-  margin-bottom: 20px;
-}
 .favorite-button-container {
   position: absolute;
   top: 20px;
@@ -527,5 +646,150 @@ const addToCartHandler = async () => {
 .cart-button:hover {
   background-color: #645e5e;
 }
+/* 支付弹窗相关 */
+.payment-dialog .pd-container {
+  padding: 10px;
+}
 
+.pd-product-info {
+  display: flex;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.pd-product-image {
+  width: 120px;
+  height: 120px;
+  margin-right: 20px;
+}
+
+.pd-thumb {
+  width: 100px;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+.pd-details {
+  flex: 1;
+}
+
+.pd-product-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.pd-spec {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.pd-price {
+  font-size: 16px;
+}
+
+.pd-price-value {
+  color: #f56c6c;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.pd-order-info {
+  padding: 0 15px;
+}
+
+.pd-form-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding: 10px 0;
+}
+
+.pd-form-label {
+  width: 100px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+  line-height: 32px;
+  flex-shrink: 0;
+}
+
+.pd-address-select {
+  flex: 1;
+}
+
+.pd-manage-address {
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.pd-address-option {
+  display: flex;
+  flex-direction: column;
+}
+
+.pd-address-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pd-recipient {
+  font-weight: 500;
+}
+
+.pd-phone {
+  color: #666;
+}
+
+.pd-address-detail {
+  font-size: 13px;
+  color: #999;
+  margin-top: 5px;
+}
+
+.pd-payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 15px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+  border-bottom: none;
+}
+
+
+.pd-payment-label {
+  color: #666;
+}
+
+.pd-payment-value {
+  color: #333;
+}
+
+.pd-payment-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.pd-total-price {
+  font-size: 20px;
+  font-weight: bold;
+  color: #f56c6c;
+}
+
+.pd-stock-tip {
+  margin-left: 15px;
+  color: #999;
+  font-size: 13px;
+  line-height: 32px;
+}
 </style>

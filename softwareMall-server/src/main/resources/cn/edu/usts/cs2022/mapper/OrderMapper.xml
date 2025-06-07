@@ -7,17 +7,67 @@
 
     <!-- 插入订单 -->
     <insert id="add" parameterType="cn.edu.usts.cs2022.pojo.po.Order" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO `order` (order_number, user_id, product_id, merchant_id, status, create_time)
-        VALUES (#{orderNumber}, #{userId}, #{productId}, #{merchantId}, #{status}, #{createTime});
+        INSERT INTO orders (
+            order_no,
+            user_id,
+            username,
+            product_id,
+            product_name,
+            product_image,
+            product_specs,
+            product_price,
+            quantity,
+            total_amount,
+            status,
+            receiver_name,
+            receiver_phone,
+            receiver_province,
+            receiver_city,
+            receiver_district,
+            receiver_address,
+            create_time,
+            update_time,
+            spec_id,
+            merchant_id,
+            shop_name
+        ) VALUES (
+                     #{orderNo},
+                     #{userId},
+                     #{username},
+                     #{productId},
+                     #{productName},
+                     #{productImage},
+                     #{productSpecs},
+                     #{productPrice},
+                     #{quantity},
+                     #{totalAmount},
+                     0,  -- 默认状态为0(待付款)
+                     #{receiverName},
+                     #{receiverPhone},
+                     #{receiverProvince},
+                     #{receiverCity},
+                     #{receiverDistrict},
+                     #{receiverDetail},
+                     NOW(),  -- 创建时间
+                     NOW(),  -- 更新时间
+                     #{specId},
+                     #{merchantId},
+                     #{shopName}
+                 )
     </insert>
 
-    <!-- 查询插入后的订单信息 -->
-    <select id="getById" parameterType="int" resultType="cn.edu.usts.cs2022.pojo.po.Order">
-        SELECT * FROM `order` WHERE id = #{id};
-    </select>
-
-    <select id="selectOrderWithPrice" resultType="cn.edu.usts.cs2022.pojo.vo.OrderVO">
-        select `order`.*,product.price from `order` left outer join product on order.product_id = product.id
+    <select id="selectClientOrderList" resultType="cn.edu.usts.cs2022.pojo.po.Order">
+        select * from orders
+        <where>
+            user_id = #{userId}
+            <if test="status != null and status != ''">
+            and status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+            and product_name like concat('%',#{keyword},'%')
+            </if>
+        </where>
+        order by create_time asc
     </select>
 
 </mapper>

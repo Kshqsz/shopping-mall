@@ -15,13 +15,8 @@ public interface OrderService {
 
     Order add(OrderDTO orderDTO);
 
-    void cancel(String orderNumber);
+    void cancel(Integer orderNumber);
 
-    void pay(String orderNumber);
+    void pay(Integer orderNumber);
 
-    /**
-     * 获取带有价格的订单
-     * @return
-     */
-    List<OrderVO> selectOrderWithPrice();
 }

@@ -81,10 +81,12 @@ const navigateTo = (route) => {
 
 <style scoped>
 .user-center {
-  padding: 30px 136px;
+  width: 1350px;
+  height: auto;
+  margin: auto auto;
   background-color: #f5f5f5;
   box-sizing: border-box;
-  min-height: 90vh;
+  
 }
 
 .user-center-layout {

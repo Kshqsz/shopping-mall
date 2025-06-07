@@ -45,7 +45,7 @@ public interface UserMapper {
     @Select("select * from user where id = #{id}")
     User getById(Integer id);
 
-
+    //添加地址
     @Insert("insert into user_address (user_id,receiver,phone,province,city,district,detail,created_at) values " +
             "(#{userId},#{name},#{phone},#{province},#{city},#{district},#{detail},NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id", keyColumn = "id")
@@ -58,6 +58,7 @@ public interface UserMapper {
     @Update("update user_address set is_default = true where id = #{id}")
     void setDefault(Address address);
 
+    //查询地址
     @Select("SELECT id, receiver as name,phone," +
             "province,city,district," +
             " detail,is_default FROM user_address WHERE user_id = #{userId};")
@@ -70,4 +71,10 @@ public interface UserMapper {
     @Update("update user_address set receiver=#{name},phone=#{phone},province=#{province},city=#{city}," +
             "district=#{district},detail=#{detail} where id = #{id}")
     void updateAddress(Address address);
+    //根据id查询地址
+    //查询地址
+    @Select("SELECT id, receiver as name,phone," +
+            "province,city,district," +
+            " detail FROM user_address WHERE id = #{id};")
+    AddressVo selectAddressById(Integer id);
 }
