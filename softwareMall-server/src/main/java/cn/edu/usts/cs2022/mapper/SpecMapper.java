@@ -95,4 +95,7 @@ public interface SpecMapper {
 
     @Update("update spec_item set stock = #{newStock} where id = #{specId}")
     void updateStock(@Param("specId") Integer specId, @Param("newStock") Integer newStock);
+
+    @Update("update spec_item set sales = sales+#{quantity} where id = #{specId}")
+    void updateSales(@Param("specId") Integer specId,@Param("quantity") Integer quantity);
 }

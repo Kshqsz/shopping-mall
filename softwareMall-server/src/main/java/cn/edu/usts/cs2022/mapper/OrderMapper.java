@@ -1,7 +1,9 @@
 package cn.edu.usts.cs2022.mapper;
 
+import cn.edu.usts.cs2022.pojo.dto.DeliverProductDto;
 import cn.edu.usts.cs2022.pojo.po.Order;
 import cn.edu.usts.cs2022.pojo.query.OrderClientQuery;
+import cn.edu.usts.cs2022.pojo.query.OrderMerchantQuery;
 import cn.edu.usts.cs2022.pojo.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -39,4 +41,17 @@ public interface OrderMapper {
 
 
     List<Order> selectClientOrderList(OrderClientQuery orderClientQuery);
+
+    @Select("select * from orders where id = #{id}")
+    Order selectOrderById(Integer id);
+
+    List<Order> selectMerchantOrderList(OrderMerchantQuery searchQuery);
+
+    //处理发货
+    @Update("update orders set shipping_company = #{shippingCompany},shipping_number = #{shippingNumber}" +
+            ",status = 2,shipping_time=NOW() where id = #{id}")
+    void deliver(DeliverProductDto deliverProductDto);
+
+    @Update("update orders set complete_time = NOW(),status=4 where id = #{id}")
+    void receive(Integer id);
 }

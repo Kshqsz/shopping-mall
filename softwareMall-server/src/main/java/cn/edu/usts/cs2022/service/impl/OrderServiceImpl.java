@@ -2,17 +2,18 @@ package cn.edu.usts.cs2022.service.impl;
 
 import cn.edu.usts.cs2022.mapper.*;
 
+import cn.edu.usts.cs2022.pojo.dto.DeliverProductDto;
 import cn.edu.usts.cs2022.pojo.dto.OrderDTO;
 import cn.edu.usts.cs2022.pojo.po.Merchant;
 import cn.edu.usts.cs2022.pojo.po.Order;
 import cn.edu.usts.cs2022.pojo.po.SpecItem;
 import cn.edu.usts.cs2022.pojo.po.User;
-import cn.edu.usts.cs2022.pojo.vo.OrderVO;
 import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 import cn.edu.usts.cs2022.pojo.vo.client.ProductClientDetailVo;
 import cn.edu.usts.cs2022.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -104,6 +105,27 @@ public class OrderServiceImpl implements OrderService {
 
 
         orderMapper.pay(id);
+    }
+
+    // 处理发货
+    @Override
+    public void delever(DeliverProductDto deliverProductDto) {
+        orderMapper.deliver(deliverProductDto);
+    }
+
+    @Transactional
+    @Override
+    public void receive(Integer id) {
+        //更新订单状态
+        orderMapper.receive(id);
+        Order order = orderMapper.getById(id);
+        Integer specId = order.getSpecId();
+        Integer quantity = order.getQuantity();
+        Integer productId = order.getProductId();
+        //更新规格销量明细
+        specMapper.updateSales(specId,quantity);
+        //更新商品总销量
+        productMapper.updateSales(productId,quantity);
     }
 
 }

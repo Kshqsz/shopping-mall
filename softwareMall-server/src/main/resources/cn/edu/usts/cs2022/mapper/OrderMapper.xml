@@ -24,7 +24,7 @@
             receiver_province,
             receiver_city,
             receiver_district,
-            receiver_address,
+            receiver_detail,
             create_time,
             update_time,
             spec_id,
@@ -56,6 +56,7 @@
                  )
     </insert>
 
+    <!--客户端查询订单列表-->
     <select id="selectClientOrderList" resultType="cn.edu.usts.cs2022.pojo.po.Order">
         select * from orders
         <where>
@@ -67,7 +68,26 @@
             and product_name like concat('%',#{keyword},'%')
             </if>
         </where>
-        order by create_time asc
+        order by create_time desc
     </select>
 
+    <!--商户端查询订单列表-->
+    <select id="selectMerchantOrderList" resultType="cn.edu.usts.cs2022.pojo.po.Order">
+        select * from orders
+        <where>
+            merchant_id = #{merchantId}
+            <if test="status != null and status != ''">
+                and status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                order_no = #{keyword}
+                or product_name like concat('%',#{keyword},'%')
+                or username like concat('%',#{keyword},'%')
+                )
+
+            </if>
+        </where>
+        order by create_time desc
+    </select>
 </mapper>

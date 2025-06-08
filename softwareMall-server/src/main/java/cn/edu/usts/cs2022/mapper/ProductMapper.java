@@ -84,4 +84,7 @@ public interface ProductMapper {
             "COUNT(CASE WHEN status = 0 THEN 1 ELSE NULL END) AS pending " +
             "FROM product WHERE merchant_id = #{merchantId}")
     ProductStatisticsVo selectProductStatis(Integer merchantId);
+
+    @Update("update product set total_sales = total_sales+#{quantity} where id = #{productId}")
+    void updateSales(@Param("productId") Integer productId, @Param("quantity") Integer quantity);
 }

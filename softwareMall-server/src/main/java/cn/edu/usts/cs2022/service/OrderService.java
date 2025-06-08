@@ -1,8 +1,8 @@
 package cn.edu.usts.cs2022.service;
 
+import cn.edu.usts.cs2022.pojo.dto.DeliverProductDto;
 import cn.edu.usts.cs2022.pojo.dto.OrderDTO;
 import cn.edu.usts.cs2022.pojo.po.Order;
-import cn.edu.usts.cs2022.pojo.vo.OrderVO;
 
 import java.util.List;
 
@@ -19,4 +19,7 @@ public interface OrderService {
 
     void pay(Integer orderNumber);
 
+    void delever(DeliverProductDto deliverProductDto);
+
+    void receive(Integer id);
 }

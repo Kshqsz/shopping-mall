@@ -21,3 +21,12 @@ export const orderPayService = (id) => {
 export const getOrderList = (searchQuery) => {
     return request.post('/order/client/list',searchQuery)
 }
+
+//根据Id查询订单
+export const getOrderById  = (id) =>{
+    return request.get(`/order/${id}`)
+} 
+// 处收货
+export const receive = (id) => {
+    return request.put(`/order/receive/${id}`)
+}

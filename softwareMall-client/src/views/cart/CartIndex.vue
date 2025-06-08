@@ -4,9 +4,14 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores';
 import { getCartList,deleteCartItems,updateCart } from '@/api/cart';
 
+
 const router = useRouter()
 const userStore = useUserStore();
 const user = userStore.user;
+
+const detail = (id) => {
+  router.push(`/productDetail/${id}`);
+};
 
 // 购物车数据
 const cartItems = ref([])
@@ -134,7 +139,7 @@ onMounted(() => {
         
         <div class="cart-item" v-for="item in cartItems" :key="item.cartId">
           <el-checkbox v-model="item.selected" class="item-checkbox" />
-          <div class="item-info">
+          <div class="item-info" @click="detail(item.productId)">
             <img :src="item.image" class="item-image" />
             <div class="item-details">
               <span class="item-name">{{ item.productName }}</span>

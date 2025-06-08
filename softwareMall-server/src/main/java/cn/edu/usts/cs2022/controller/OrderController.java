@@ -1,10 +1,12 @@
 package cn.edu.usts.cs2022.controller;
 
 import cn.edu.usts.cs2022.mapper.OrderMapper;
+import cn.edu.usts.cs2022.pojo.dto.DeliverProductDto;
 import cn.edu.usts.cs2022.pojo.dto.OrderDTO;
 import cn.edu.usts.cs2022.pojo.po.Order;
 import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.query.OrderClientQuery;
+import cn.edu.usts.cs2022.pojo.query.OrderMerchantQuery;
 import cn.edu.usts.cs2022.pojo.vo.OrderVO;
 import cn.edu.usts.cs2022.service.OrderService;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
@@ -65,5 +67,39 @@ public class OrderController {
         orderClientQuery.setUserId(userId);
         List<Order> orders = orderMapper.selectClientOrderList(orderClientQuery);
         return Result.success(orders);
+    }
+    //根据订单Id查询订单详情
+    @GetMapping("/{id}")
+    public Result<Order> selectById(@PathVariable Integer id) {
+        return Result.success(orderMapper.selectOrderById(id));
+    }
+
+    //商户查询订单信息
+    @PostMapping("/merchant/list")
+    public Result<List<Order>> selectMerchantList(@RequestBody OrderMerchantQuery searchQuery) {
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer merchantId = (Integer) map.get("merchantId");
+        searchQuery.setMerchantId(merchantId);
+        List<Order> orders = orderMapper.selectMerchantOrderList(searchQuery);
+        return Result.success(orders);
+    }
+
+    // 处理发货
+    @PostMapping("/deliver")
+    public Result delever(@RequestBody DeliverProductDto deliverProductDto) {
+        orderService.delever(deliverProductDto);
+        return Result.success();
+    }
+
+    // 处理收货
+    @PutMapping("/receive/{id}")
+    public Result receive(@PathVariable Integer id) {
+        orderService.receive(id);
+        return Result.success();
+    }
+
+    @PutMapping("/returnRequest/{id}")
+    public Result returnRequest(@PathVariable Integer id) {
+        return Result.success();
     }
 }

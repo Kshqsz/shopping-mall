@@ -1,8 +1,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores';
-import { getOrderList } from '@/api/order';
+import { getOrderList,receive,orderCancelService } from '@/api/order';
 import { useRouter } from 'vue-router';
+
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -13,6 +14,10 @@ const currentPage = ref(1);
 const pageSize = ref(6);
 const keyword = ref('');
 const activeTab = ref('all');
+
+const detail = (id) => {
+  router.push(`/orderDetail/${id}`);
+};
 
 // 分类标签配置
 const tabs = ref([
@@ -32,7 +37,7 @@ const getOrders = async () => {
       keyword: keyword.value,
       status: activeTab.value === 'all' ? null : activeTab.value
     });
-    
+    console.log(res.data.data)
     orders.value = res.data.data;
     applyFilter();
   } catch (error) {
@@ -92,18 +97,42 @@ const handlePay = (order) => {
   });
 };
 
+const cancelOrder = (order) =>{
+  // eslint-disable-next-line no-undef
+  ElMessageBox.confirm(
+    '确定要取消订单吗？',
+    '确认取消',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }
+  ).then(async () => {
+    try {
+      const res = await orderCancelService(order.id)
+      if (res.data.code === 0) {
+        // eslint-disable-next-line no-undef
+        ElMessage.success('订单已取消')
+         getOrders();
+      } else {
+        // eslint-disable-next-line no-undef
+        ElMessage.error(res.message || '取消订单失败')
+      }
+    } catch (error) {
+      console.error('取消订单失败:', error)
+      // eslint-disable-next-line no-undef
+      ElMessage.error('取消订单失败')
+    }
+  })
+}
 
+// 确认收货操r作
+const handleConfirmReceipt = async (order) => {
+  await receive(order.id)
+  getOrders();
+  // eslint-disable-next-line no-undef
+  ElMessage.success("收货成功")
 
-// 查看商品操作
-const handleViewProduct = (order) => {
-  router.push(`/productDetail/${order.productId}`);
-};
-
-// 确认收货操作
-const handleConfirmReceipt = (order) => {
-  // 实际开发中调用确认收货API
-  console.log('确认收货', order);
-  alert(`订单 ${order.orderNo} 已确认收货`);
 };
 
 // 查看退款详情
@@ -158,12 +187,13 @@ onMounted(() => {
     <!-- 订单列表 -->
     <el-table 
       :data="paginatedOrders" 
+      
       style="width: 100%"
       v-if="filteredOrders.length > 0"
     >
-      <el-table-column label="商品" :width="180">
+      <el-table-column label="商品" :width="220" >
         <template #default="{ row }">
-          <div class="product-info">
+          <div class="product-info" @click="detail(row.id)">
             <img 
               :src="row.productImage" 
               alt="商品图片" 
@@ -177,17 +207,17 @@ onMounted(() => {
         </template>
       </el-table-column>
       
-      <el-table-column label="订单号" prop="orderNo" width="170" />
+      <el-table-column label="订单号" prop="orderNo" width="150" @click="detail(row.id)"/>
       
       <el-table-column label="商家" prop="shopName" width="120" />
       
-      <el-table-column label="金额" width="100">
+      <el-table-column label="金额" width="110">
         <template #default="{ row }">
           <div class="price">￥{{ row.totalAmount.toFixed(2) }}</div>
         </template>
       </el-table-column>
       
-      <el-table-column label="状态" width="100">
+      <el-table-column label="状态" width="80">
         <template #default="{ row }">
           <div :class="['status', `status-${row.status}`]">
             {{ getOrderStatus(row.status) }}
@@ -195,7 +225,7 @@ onMounted(() => {
         </template>
       </el-table-column>
       
-      <el-table-column label="操作" width="180">
+      <el-table-column label="操作" width="215">
         <template #default="{ row }">
           <!-- 根据状态显示不同操作按钮 -->
           <el-button 
@@ -206,41 +236,30 @@ onMounted(() => {
           >
             去支付
           </el-button>
-          
           <el-button 
-            v-if="row.status === 1 || row.status === 2" 
+            v-if="row.status === 0" 
+            @click="cancelOrder(row)" 
+            size="mini" 
+            type="danger"
+          >
+            取消订单
+          </el-button>
+        
+          <el-button 
+            v-if="row.status === 1 || row.status === 2 || row.status === 5 || row.status === 4" 
+            @click="detail(row.id)"
+            size="mini" 
+            type="success"
+          >
+            查看详情
+          </el-button>  
+          <el-button 
+            v-if="row.status === 2" 
             size="mini"
             @click="handleConfirmReceipt(row)"
           >
             确认收货
           </el-button>
-          
-          <el-button 
-            v-if="row.status === 1 || row.status === 2" 
-            size="mini" 
-            type="info"
-          >
-            查看物流
-          </el-button>
-          
-          <el-button 
-            v-if="row.status === 4" 
-            @click="handleDownload(row)" 
-            size="mini" 
-            type="success"
-          >
-            下载软件
-          </el-button>
-          
-          <el-button 
-            v-if="row.status === 5" 
-            @click="handleViewProduct(row)" 
-            size="mini" 
-            type="warning"
-          >
-            查看商品
-          </el-button>
-          
           <el-button 
             v-if="row.status === 6 || row.status === 7" 
             @click="handleRefundDetail(row)" 

@@ -1,26 +1,44 @@
 <script setup>
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router';
-import { orderCancelService, orderPayService } from '@/api/order'
-import { codeToText } from 'element-china-area-data';
-
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { orderCancelService, orderPayService ,getOrderById} from '@/api/order'
+import { codeToText } from 'element-china-area-data'
+import { ElMessage, ElMessageBox } from 'element-plus'
 // 获取路由参数
-const route = useRoute();
-const router = useRouter();
-const dialogVisible = ref(false);
-const order = JSON.parse(route.query.order);
-console.log(order)
-
-
+const route = useRoute()
+const router = useRouter()
+const dialogVisible = ref(false)
+const isPaying = ref(false)
+const orderId = ref(JSON.parse(route.query.order))
+const order = ref({});
 // 支付操作
 const pay = async () => {
   try {
-    await orderPayService(order.id)
-    ElMessage.success("支付成功！")
-    dialogVisible.value = true
+    isPaying.value = true
+    // 添加支付中的视觉效果
+    ElMessage.info('正在处理支付...')
+    
+    // 模拟支付延迟效果
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    const res = await orderPayService(order.value.id)
+    
+    if (res.data.code === 0) {
+      // 支付成功
+      ElMessage.success("支付成功！")
+      dialogVisible.value = true
+      
+      // 更新订单状态
+      order.value.status = 1
+      order.value.paymentTime = new Date().toISOString()
+    } else {
+      ElMessage.error(res.message || "支付失败，请重试")
+    }
   } catch (error) {
     console.error('支付失败:', error)
     ElMessage.error("支付失败，请重试")
+  } finally {
+    isPaying.value = false
   }
 }
 
@@ -36,18 +54,19 @@ const cancelOrder = () => {
     }
   ).then(async () => {
     try {
-      console.log(order)
-      await orderCancelService(order.id)
-      ElMessage.success('订单已取消')
-      router.push(`/productDetail/${order.productId}`)
+      const res = await orderCancelService(order.value.id)
+      if (res.data.code === 0) {
+        ElMessage.success('订单已取消')
+        router.push(`/productDetail/${order.value.productId}`)
+      } else {
+        ElMessage.error(res.message || '取消订单失败')
+      }
     } catch (error) {
       console.error('取消订单失败:', error)
       ElMessage.error('取消订单失败')
     }
   })
 }
-
-
 
 // 格式化时间
 const formatDate = (timestamp) => {
@@ -58,8 +77,15 @@ const formatDate = (timestamp) => {
 
 // 格式化地址
 const formatAddress = (order) => {
-  return `${codeToText[order.receiverCity]}${codeToText[order.receiverProvince]}${codeToText[order.receiverDistrict]}${order.receiverDetail}`
+  return `${codeToText[order.receiverProvince] || ''}${codeToText[order.receiverCity] || ''}${codeToText[order.receiverDistrict] || ''}${order.receiverDetail || ''}`
 }
+
+const viewOrderDetails = (id) => {
+  router.push(`/orderDetail/${id}`)
+}
+onMounted(async () => {
+  order.value = (await getOrderById(orderId.value.id)).data.data;
+});
 </script>
 
 <template>
@@ -76,7 +102,7 @@ const formatAddress = (order) => {
         <div class="status-info">
           订单状态: 
           <el-tag :type="order.status === 0 ? 'warning' : 'success'">
-            {{ order.status === 0 ? '待支付' : '已完成' }}
+            {{ order.status === 0 ? '待支付' : '已支付' }}
           </el-tag>
         </div>
         <div class="create-time">
@@ -146,14 +172,24 @@ const formatAddress = (order) => {
         </div>
       </div>
 
+      <!-- 支付时间信息 -->
+      <div class="time-info" v-if="order.status !== 0">
+        <h3>支付信息</h3>
+        <div class="time-details">
+          <div class="time-item">
+            <span class="time-label">支付时间:</span>
+            <span class="time-value">{{ formatDate(order.paymentTime) }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- 支付和取消按钮区域 -->
-      <div class="payment-actions">
+      <div class="payment-actions" v-if="order.status === 0">
         <el-button 
           type="default" 
           size="large" 
           class="cancel-button" 
           @click="cancelOrder"
-          v-if="order.status === 0"
         >
           取消订单
         </el-button>
@@ -162,22 +198,35 @@ const formatAddress = (order) => {
           size="large" 
           class="pay-button" 
           @click="pay" 
-          v-if="order.status === 0"
+          :loading="isPaying"
+          :disabled="isPaying"
         >
           <i class="fab fa-weixin wechat-icon"></i> 微信支付
+        </el-button>
+      </div>
+
+      <!-- 已支付状态下的操作按钮 -->
+      <div class="payment-actions" v-else>
+        <el-button 
+          type="primary" 
+          size="large" 
+          class="view-button" 
+          @click="viewOrderDetails(order.id)"
+        >
+          查看订单详情
         </el-button>
       </div>
     </el-card>
 
     <!-- 支付成功弹窗 -->
-    <el-dialog v-model="dialogVisible" title="支付成功" width="500px">
+    <el-dialog v-model="dialogVisible" title="支付成功" width="500px" :show-close="false">
       <div class="success-dialog">
         <i class="el-icon-success success-icon"></i>
         <h3>支付成功！</h3>
         <p>您的订单已支付成功，我们将尽快为您处理发货</p>
         
         <div class="dialog-actions">
-          <el-button type="primary" @click="viewOrderDetails">查看订单</el-button>
+          <el-button type="primary" @click="viewOrderDetails(order.id)">查看订单</el-button>
           <el-button @click="router.push('/homePage')">继续购物</el-button>
         </div>
       </div>
@@ -290,6 +339,16 @@ const formatAddress = (order) => {
   color: #f56c6c;
 }
 
+.shipping-info, .time-info {
+  padding: 20px;
+  border-bottom: 1px dashed #ebeef5;
+}
+
+.shipping-info h3, .time-info h3 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #333;
+}
 
 .address-details, .time-details {
   padding-left: 10px;
@@ -325,6 +384,11 @@ const formatAddress = (order) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.pay-button {
+  background-color: #67C23A;
+  border-color: #67C23A;
 }
 
 .wechat-icon {

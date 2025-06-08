@@ -121,4 +121,6 @@ public class ProductController {
         Integer merchantId = (Integer) map.get("merchantId");
         return Result.success(productMapper.selectProductStatis(merchantId));
     }
+
+
 }
