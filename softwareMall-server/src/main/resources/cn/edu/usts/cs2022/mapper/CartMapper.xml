@@ -23,4 +23,11 @@
         WHERE
             c.user_id = #{userId} and p.status = 1
     </select>
+
+    <delete id="deleteCartItem" >
+        delete from cart where id in
+        <foreach collection="ids" open="(" close=")" separator="," item="id">
+            #{id}
+        </foreach>
+    </delete>
 </mapper>

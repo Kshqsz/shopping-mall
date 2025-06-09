@@ -2,8 +2,8 @@ package cn.edu.usts.cs2022.mapper;
 
 
 import cn.edu.usts.cs2022.pojo.dto.CartAddDTO;
+import cn.edu.usts.cs2022.pojo.dto.OrderDTO;
 import cn.edu.usts.cs2022.pojo.po.Cart;
-import cn.edu.usts.cs2022.pojo.po.Result;
 import cn.edu.usts.cs2022.pojo.vo.client.CartListVo;
 import org.apache.ibatis.annotations.*;
 
@@ -25,6 +25,16 @@ public interface CartMapper {
 
     List<CartListVo> selectCartList(@Param("userId") Integer userId);
 
-    @Delete("delete from cart where id = #{id}")
-    void deleteCartItem(Integer id);
+
+    void deleteCartItem(@Param("ids") List<Integer> ids);
+
+    //下单清除购物车数据
+    @Delete("delete from cart where user_id = #{userId} and product_id=#{productId}")
+    void deleteCartByOrder(OrderDTO orderVO);
+
+
+
+    //根据商品id获取商户id。补前端功能
+    @Select("select merchant_id from product where id=#{productId}")
+    Integer selectMerchant(OrderDTO orderDTO);
 }
