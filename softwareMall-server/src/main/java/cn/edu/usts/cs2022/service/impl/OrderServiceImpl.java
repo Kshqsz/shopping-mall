@@ -128,4 +128,39 @@ public class OrderServiceImpl implements OrderService {
         productMapper.updateSales(productId,quantity);
     }
 
+    @Transactional
+    @Override
+    public void toReturnStatus(Integer id) {
+        //若已支付但未发货，则直接退款
+        Order order = orderMapper.getById(id);
+        if (order.getStatus() == 1) {
+            //库存复原
+            Integer quantity = order.getQuantity();
+            Integer specId = order.getSpecId();
+            Integer stock = specMapper.getStock(specId);
+            specMapper.updateStock(specId,quantity+stock);
+            //订单状态为已退款
+            orderMapper.toReturnStatus(id,7);
+        }
+        else {
+            //若已经发货，则需要商家收到货物同意才能退款等待商家处理
+            orderMapper.toReturnStatus(id,6);
+        }
+
+
+    }
+
+    //商家同意退款
+    @Override
+    public void agreeReturn(Integer id) {
+        Order order = orderMapper.getById(id);
+        //库存复原
+        Integer quantity = order.getQuantity();
+        Integer specId = order.getSpecId();
+        Integer stock = specMapper.getStock(specId);
+        specMapper.updateStock(specId,quantity+stock);
+        //订单状态为已退款
+        orderMapper.toReturnStatus(id,7);
+    }
+
 }

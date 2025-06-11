@@ -22,4 +22,8 @@ public interface OrderService {
     void delever(DeliverProductDto deliverProductDto);
 
     void receive(Integer id);
+
+    void toReturnStatus(Integer id);
+
+    void agreeReturn(Integer id);
 }

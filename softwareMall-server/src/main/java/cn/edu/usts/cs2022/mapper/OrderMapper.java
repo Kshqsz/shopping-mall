@@ -4,7 +4,6 @@ import cn.edu.usts.cs2022.pojo.dto.DeliverProductDto;
 import cn.edu.usts.cs2022.pojo.po.Order;
 import cn.edu.usts.cs2022.pojo.query.OrderClientQuery;
 import cn.edu.usts.cs2022.pojo.query.OrderMerchantQuery;
-import cn.edu.usts.cs2022.pojo.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -54,4 +53,7 @@ public interface OrderMapper {
 
     @Update("update orders set complete_time = NOW(),status=4 where id = #{id}")
     void receive(Integer id);
+
+    @Update("update orders set status = #{status},refund_time = NOW() where id = #{id}")
+    void toReturnStatus(@Param("id") Integer id, @Param("status") Integer status);
 }

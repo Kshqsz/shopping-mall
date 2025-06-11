@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useUserStore } from '@/stores';
-import { getOrderList,receive,orderCancelService } from '@/api/order';
+import { getOrderList,receive,orderCancelService, returnService} from '@/api/order';
 import { useRouter } from 'vue-router';
 
 
@@ -135,12 +135,7 @@ const handleConfirmReceipt = async (order) => {
 
 };
 
-// 查看退款详情
-const handleRefundDetail = (order) => {
-  // 实际开发中跳转到退款详情页
-  console.log('查看退款详情', order);
-  alert(`查看订单 ${order.orderNo} 的退款详情`);
-};
+
 
 // 获取当前页的订单数据
 const paginatedOrders = computed(() => {
@@ -152,6 +147,12 @@ const paginatedOrders = computed(() => {
 onMounted(() => {
   getOrders();
 });
+
+//处理退货申请
+const returnRequest = async(id) =>{
+  await returnService(id)
+  await getOrders()
+}
 </script>
 
 <template>
@@ -225,7 +226,7 @@ onMounted(() => {
         </template>
       </el-table-column>
       
-      <el-table-column label="操作" width="215">
+      <el-table-column label="操作" width="315">
         <template #default="{ row }">
           <!-- 根据状态显示不同操作按钮 -->
           <el-button 
@@ -246,7 +247,7 @@ onMounted(() => {
           </el-button>
         
           <el-button 
-            v-if="row.status === 1 || row.status === 2 || row.status === 5 || row.status === 4" 
+            v-if="row.status === 1 || row.status === 2 || row.status === 5 || row.status === 4 || row.status === 7 || row.status === 6" 
             @click="detail(row.id)"
             size="mini" 
             type="success"
@@ -261,12 +262,12 @@ onMounted(() => {
             确认收货
           </el-button>
           <el-button 
-            v-if="row.status === 6 || row.status === 7" 
-            @click="handleRefundDetail(row)" 
+            v-if="row.status === 1 || row.status === 2" 
+            @click="returnRequest(row.id)" 
             size="mini" 
-            type="info"
+            type="danger"
           >
-            退款详情
+            退货退款
           </el-button>
         </template>
       </el-table-column>

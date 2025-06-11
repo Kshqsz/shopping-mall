@@ -9,12 +9,59 @@
     <el-card class="info-card" shadow="hover">
       <div class="order-header">
         <div class="status-info">
-          <el-tag :type="getStatusTagType(order.status)" size="large">
+          <el-tag 
+            :type="getStatusTagType(order.status)" 
+            size="large"
+            :class="'status-tag status-' + order.status"
+          >
+            
             {{ getStatusText(order.status) }}
           </el-tag>
+          <div class="action-buttons">
+            <el-button 
+              type="primary" 
+              size="small" 
+              v-if="order.status === 1"
+              @click="showDeliverDialog = true"
+            >
+              发货
+            </el-button>
+            <el-button 
+              type="success" 
+              size="small" 
+              v-if="order.status === 6"
+              @click="handleAgreeReturn()"
+              :icon="CircleCheck"
+            >
+              同意退款
+            </el-button>
+          </div>
         </div>
         <div class="order-no">订单编号: {{ order.orderNo }}</div>
       </div>
+      
+      <!-- 发货对话框 -->
+      <el-dialog v-model="showDeliverDialog" title="订单发货" width="500px">
+        <el-form :model="deliverForm" label-width="80px">
+          <el-form-item label="物流公司" required>
+            <el-select v-model="deliverForm.shippingCompany" placeholder="请选择物流公司">
+              <el-option
+                v-for="item in shippingCompanies"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="物流单号" required>
+            <el-input v-model="deliverForm.shippingNumber" placeholder="请输入物流单号" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="showDeliverDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleDeliver">确认发货</el-button>
+        </template>
+      </el-dialog>
       
       <el-divider />
       
@@ -24,6 +71,9 @@
         <el-image 
           :src="order.productImage" 
           class="product-image"
+          :preview-src-list="[order.productImage]"
+          :initial-index="0"
+          fit="cover"
         />
         <div class="product-details">
           <div class="name">{{ order.productName }}</div>
@@ -90,8 +140,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getOrderById } from '@/api/order'
+import { getOrderById, deliver, agreeReturn } from '@/api/order'
 import { codeToText } from 'element-china-area-data'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -127,6 +178,22 @@ const order = ref({
   shippingNumber: null
 })
 
+const showDeliverDialog = ref(false)
+const deliverForm = ref({
+  shippingCompany: '',
+  shippingNumber: ''
+})
+
+const shippingCompanies = ref([
+  { value: '顺丰速运', label: '顺丰速运' },
+  { value: '中通快递', label: '中通快递' },
+  { value: '圆通速递', label: '圆通速递' },
+  { value: '申通快递', label: '申通快递' },
+  { value: '韵达快递', label: '韵达快递' },
+  { value: '京东物流', label: '京东物流' },
+  { value: '邮政EMS', label: '邮政EMS' }
+])
+
 // 获取订单详情
 const fetchOrderDetail = async () => {
   try {
@@ -135,6 +202,53 @@ const fetchOrderDetail = async () => {
   } catch (error) {
     console.error('获取订单详情失败:', error)
     ElMessage.error('获取订单详情失败')
+  }
+}
+
+// 处理发货
+const handleDeliver = async () => {
+  if (!deliverForm.value.shippingCompany) {
+    ElMessage.warning('请选择物流公司')
+    return
+  }
+  if (!deliverForm.value.shippingNumber) {
+    ElMessage.warning('请输入物流单号')
+    return
+  }
+  
+  try {
+    await deliver({
+      id: order.value.id,
+      shippingCompany: deliverForm.value.shippingCompany,
+      shippingNumber: deliverForm.value.shippingNumber
+    })
+    ElMessage.success('发货成功')
+    showDeliverDialog.value = false
+    fetchOrderDetail() // 刷新订单数据
+  } catch (error) {
+    console.error('发货失败:', error)
+    ElMessage.error('发货失败')
+  }
+}
+
+// 处理同意退款
+const handleAgreeReturn = async () => {
+  try {
+    // eslint-disable-next-line no-undef
+    await ElMessageBox.confirm('确定同意该订单的退款申请吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await agreeReturn(order.value.id)
+    ElMessage.success('退款处理成功')
+    fetchOrderDetail() // 刷新订单数据
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('退款处理失败:', error)
+      ElMessage.error('退款处理失败')
+    }
   }
 }
 
@@ -155,12 +269,12 @@ const fullAddress = computed(() => {
 const getStatusTagType = (status) => {
   const typeMap = {
     0: 'warning', // 待支付
-    1: '',         // 待发货
-    2: 'info',     // 待收货
-    4: 'success',  // 已完成
-    5: 'danger',   // 已取消
-    6: 'warning',  // 退款中
-    7: 'info'      // 已退款
+    1: 'primary', // 待发货
+    2: 'info',    // 待收货
+    4: 'success', // 已完成
+    5: 'danger',  // 已取消
+    6: 'warning', // 退款中
+    7: 'info'     // 已退款
   }
   return typeMap[status] || ''
 }
@@ -205,6 +319,72 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.status-tag {
+  font-size: 16px;
+  padding: 0 12px;
+  height: 32px;
+  line-height: 32px;
+}
+
+.status-tag .status-icon {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.status-0 {
+  background-color: #fdf6ec;
+  border-color: #f5dab1;
+  color: #e6a23c;
+}
+
+.status-1 {
+  background-color: #ecf5ff;
+  border-color: #b3d8ff;
+  color: #409eff;
+}
+
+.status-2 {
+  background-color: #f4f4f5;
+  border-color: #d3d4d6;
+  color: #909399;
+}
+
+.status-4 {
+  background-color: #f0f9eb;
+  border-color: #c2e7b0;
+  color: #67c23a;
+}
+
+.status-5 {
+  background-color: #fef0f0;
+  border-color: #fbc4c4;
+  color: #f56c6c;
+}
+
+.status-6 {
+  background-color: #fdf6ec;
+  border-color: #f5dab1;
+  color: #e6a23c;
+}
+
+.status-7 {
+  background-color: #f4f4f5;
+  border-color: #d3d4d6;
+  color: #909399;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
 }
 
 .order-no {

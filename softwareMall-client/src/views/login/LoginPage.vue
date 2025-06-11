@@ -81,7 +81,7 @@ const rules = {
       <el-card class="box-card">
         <el-form :model="formModel" :rules="rules" ref="form" size="large" autocomplete="off" v-if="isRegister">
           <el-form-item>
-            <h1>软件商城注册</h1>
+            <h1>购物商城注册</h1>
           </el-form-item>
           <el-form-item prop="username">
             <el-input v-model="formModel.username" :prefix-icon="User" placeholder="请输入用户名"></el-input>
@@ -101,7 +101,7 @@ const rules = {
         </el-form>
         <el-form :model="formModel" :rules="rules" ref="form" size="large" autocomplete="off" v-else>
           <el-form-item>
-            <h1>软件商城登录</h1>
+            <h1>购物商城登录</h1>
           </el-form-item>
           <el-form-item prop="username">
             <el-input v-model="formModel.username" :prefix-icon="User" placeholder="请输入用户名"></el-input>

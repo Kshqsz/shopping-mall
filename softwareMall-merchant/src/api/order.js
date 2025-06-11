@@ -12,5 +12,10 @@ export const getOrderById  = (id) =>{
 
 //处理发货
 export const deliver = (dto) => {
-  return request.post("/order/deliver",dto)
+  return request.post('/order/deliver',dto)
 } 
+
+//同意退款
+export const agreeReturn = (id) => {
+  return request.put(`/order/agreeReturn/${id}`)
+}

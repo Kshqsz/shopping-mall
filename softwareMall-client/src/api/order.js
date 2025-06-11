@@ -26,7 +26,11 @@ export const getOrderList = (searchQuery) => {
 export const getOrderById  = (id) =>{
     return request.get(`/order/${id}`)
 } 
-// 处收货
+//处理收货
 export const receive = (id) => {
     return request.put(`/order/receive/${id}`)
+}
+//处理退货退款
+export const returnService = (id) => {
+    return request.put(`/order/returnRequest/${id}`)
 }

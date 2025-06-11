@@ -101,23 +101,6 @@
       </el-descriptions>
     </el-card>
 
-    <!-- 退款信息 -->
-    <el-card class="info-card" v-if="order.status === 6 || order.status === 7">
-      <template #header>
-        <div class="card-header">
-          <span>退款信息</span>
-        </div>
-      </template>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="退款状态">
-          {{ order.status === 6 ? '退款中' : '已退款' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="退款时间" v-if="order.refundTime">
-          {{ formatDate(order.refundTime) }}
-        </el-descriptions-item>
-      </el-descriptions>
-    </el-card>
-
     <!-- 操作按钮 -->
     <div class="action-buttons">
       <el-button 
@@ -142,17 +125,11 @@
         确认收货
       </el-button>
       <el-button 
-        v-if="order.status === 2 || order.status === 4" 
+        v-if="order.status === 2 || order.status === 1" 
         type="danger" 
         @click="handleReturnGoods"
       >
         退货退款
-      </el-button>
-      <el-button 
-        v-if="order.status === 6" 
-        @click="handleViewRefundDetail"
-      >
-        查看退款进度
       </el-button>
       <el-button 
         v-if="order.status === 7" 
@@ -240,7 +217,7 @@ const statusDesc = computed(() => {
     2: '商品已发出，请注意查收',
     4: '交易已完成',
     5: '订单已取消',
-    6: '退款申请已提交',
+    6: '退款申请已提交待商家通过',
     7: '退款已完成'
   }
   return descMap[order.value.status] || ''
@@ -349,11 +326,6 @@ const handleConfirmReceipt = () => {
 }
 
 
-
-const handleViewRefundDetail = () => {
-  // eslint-disable-next-line no-undef
-  ElMessage.info('查看退款详情')
-}
 
 onMounted(() => {
   console.log(route.params.id)

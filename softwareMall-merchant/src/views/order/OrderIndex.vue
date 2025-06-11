@@ -33,7 +33,7 @@
 
     <!-- 订单列表表格 -->
     <el-table :data="paginatedOrders" style="width: 100%" border height="calc(100vh - 280px)">
-      <el-table-column prop="orderNo" label="订单编号" width="200" />
+      <el-table-column prop="orderNo" label="订单编号" width="180" />
       <el-table-column label="商品信息" width="300">
         <template #default="{ row }">
           <div class="product-info">
@@ -61,14 +61,14 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="订单状态" width="160">
+      <el-table-column prop="status" label="订单状态" width="140">
         <template #default="{ row }">
-          <el-tag :type="getStatusTagType(row.status)" size="small">
+          <el-tag :type="getStatusTagType(row.status)" size="large">
             {{ getStatusText(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="下单时间" width="200">
+      <el-table-column prop="createTime" label="下单时间" width="180">
         <template #default="{ row }">
           {{ formatDate(row.createTime) }}
         </template>
@@ -78,7 +78,7 @@
           <span class="price">¥{{ row.totalAmount.toFixed(2) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <div class="actions">
             <el-button size="middle" @click="viewOrderDetail(row.id)" type="primary">详情</el-button>
@@ -90,6 +90,14 @@
              
             >
               发货
+            </el-button>
+            <el-button
+              v-if="row.status === 6"
+              size="middle"
+              type="danger"
+              @click="returnService(row.id)"
+            >
+              同意退款
             </el-button>
           </div>
         </template>
@@ -130,7 +138,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getOrderList ,deliver} from '@/api/order'
+import { getOrderList ,deliver,agreeReturn} from '@/api/order'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -274,6 +282,12 @@ const handleSizeChange = (val) => {
 // 分页页码改变
 const handlePageChange = () => {
   // 可以在这里添加页码改变时的逻辑
+}
+
+//处理退款
+const returnService = async (id) => {
+  await agreeReturn(id)
+  fetchOrders()
 }
 
 onMounted(() => {

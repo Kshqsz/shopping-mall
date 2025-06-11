@@ -98,8 +98,16 @@ public class OrderController {
         return Result.success();
     }
 
+    //处理退货
     @PutMapping("/returnRequest/{id}")
     public Result returnRequest(@PathVariable Integer id) {
+        orderService.toReturnStatus(id);
+        return Result.success();
+    }
+    //商家同意退货
+    @PutMapping("/agreeReturn/{id}")
+    public Result agreeReturn(@PathVariable Integer id) {
+        orderService.agreeReturn(id);
         return Result.success();
     }
 }
