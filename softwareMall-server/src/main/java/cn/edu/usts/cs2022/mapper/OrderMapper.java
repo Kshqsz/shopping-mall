@@ -56,4 +56,7 @@ public interface OrderMapper {
 
     @Update("update orders set status = #{status},refund_time = NOW() where id = #{id}")
     void toReturnStatus(@Param("id") Integer id, @Param("status") Integer status);
+
+    @Select("select * from orders where product_id = #{productId} and status in (0,1,2,6)")
+    List<Order> getOrderByProductId(Integer productId);
 }

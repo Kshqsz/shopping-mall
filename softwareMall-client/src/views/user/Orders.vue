@@ -126,7 +126,7 @@ const cancelOrder = (order) =>{
   })
 }
 
-// 确认收货操r作
+// 确认收货操作
 const handleConfirmReceipt = async (order) => {
   await receive(order.id)
   getOrders();
@@ -150,8 +150,25 @@ onMounted(() => {
 
 //处理退货申请
 const returnRequest = async(id) =>{
-  await returnService(id)
-  await getOrders()
+  try {
+    await ElMessageBox.confirm(
+      '确定要申请退货退款吗？',
+      '确认退货退款',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    await returnService(id)
+    ElMessage.success('退货退款申请已提交')
+    await getOrders()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('申请退货退款失败:', error)
+      ElMessage.error('申请退货退款失败')
+    }
+  }
 }
 </script>
 

@@ -35,7 +35,6 @@ public class ProductController {
     //新增商品
     @PostMapping("/add")
     public Result add(@RequestBody ProductDTO productDTO) {
-        System.out.println(productDTO.toString());
         productService.add(productDTO);
         return Result.success();
     }

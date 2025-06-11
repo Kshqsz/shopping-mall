@@ -68,7 +68,6 @@
         <el-image 
           :src="order.productImage" 
           :zoom-rate="1.2" 
-          :preview-src-list="[order.productImage]" 
           fit="cover" 
           class="goods-image"
         />
@@ -154,7 +153,7 @@ import {
   Goods,
   Warning
 } from '@element-plus/icons-vue'
-import { getOrderById ,receive,orderCancelService} from '@/api/order'
+import { getOrderById ,receive,orderCancelService,returnService} from '@/api/order'
 import { codeToText } from 'element-china-area-data';
 
 
@@ -325,7 +324,28 @@ const handleConfirmReceipt = () => {
   })
 }
 
-
+const handleReturnGoods = async () =>{
+  try {
+    await ElMessageBox.confirm(
+      '确定要申请退货退款吗？',
+      '确认退货退款',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    await returnService(route.params.id)
+    ElMessage.success('退货退款申请已提交')
+    fetchOrderDetail(route.params.id)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('申请退货退款失败:', error)
+      ElMessage.error('申请退货退款失败')
+    }
+  }
+  
+}
 
 onMounted(() => {
   console.log(route.params.id)

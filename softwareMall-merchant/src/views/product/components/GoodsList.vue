@@ -116,7 +116,6 @@
 <script setup>
 import { ref, reactive, watch,computed } from 'vue'
 import { selectGoods,updateGoodsStatus } from '@/api/product'
-import { ElMessage } from 'element-plus'
 
 const props = defineProps({
   searchParams: Object
@@ -165,11 +164,10 @@ const updateStatus = async (goodsId, newStatus) => {
       
       // 通知父组件状态变化
       emit('status-changed')
-    } else {
-      ElMessage.error(response.data.message || '操作失败')
     }
   } catch (error) {
-    ElMessage.error('操作失败：' + error.message)
+    console.log(error)
+    ElMessage.error('当前商品有相关订单未处理，请先处理订单！')
   }
 }
 
@@ -195,7 +193,7 @@ const handleReOnShelves = (goodsId) => {
     type: 'success',
     center: true
   }).then(() => {
-    updateStatus(goodsId,0)
+    updateStatus(goodsId,1)
   }).catch(() => {
     // 用户取消操作
   })

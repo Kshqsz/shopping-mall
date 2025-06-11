@@ -1,6 +1,7 @@
 package cn.edu.usts.cs2022.service.impl;
 
 import cn.edu.usts.cs2022.mapper.CategoryMapper;
+import cn.edu.usts.cs2022.mapper.OrderMapper;
 import cn.edu.usts.cs2022.mapper.ProductMapper;
 import cn.edu.usts.cs2022.mapper.SpecMapper;
 import cn.edu.usts.cs2022.pojo.dto.ProductDTO;
@@ -36,6 +37,8 @@ public class ProductServiceImpl implements ProductService {
     private final SpecMapper specMapper;
 
     private final CategoryMapper categoryMapper;
+
+    private final OrderMapper orderMapper;
 
     // 添加商品
     @Transactional(rollbackFor = Exception.class)
@@ -139,6 +142,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public void updateStatus(StatusDto statusDto) {
+        //若是要下架，要检查是否有相关订单未处理完
+        Integer status = statusDto.getStatus();
+        if (status == -1) {
+            Integer productId = statusDto.getId();
+            List<Order> orders = orderMapper.getOrderByProductId(productId);
+            if (orders.size() > 0) {
+                throw new RuntimeException("当前商品有相关订单未处理，无法下架");
+            }
+        }
         productMapper.updateStatus(statusDto);
     }
 

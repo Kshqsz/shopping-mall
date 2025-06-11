@@ -46,18 +46,15 @@
             <div class="product-details">
               <div class="product-name">{{ row.productName }}</div>
             </div>
-            
           </div>
         </template>
       </el-table-column>
       <el-table-column label="商品规格" width="200">
         <template #default="{ row }">
           <div class="product-info">
-
             <div class="product-details">
               <div class="product-name">{{ row.productSpecs }}</div>
             </div>
-            
           </div>
         </template>
       </el-table-column>
@@ -87,7 +84,6 @@
               size="middle"
               type="primary"
               @click="handleShip(row)"
-             
             >
               发货
             </el-button>
@@ -95,7 +91,7 @@
               v-if="row.status === 6"
               size="middle"
               type="danger"
-              @click="returnService(row.id)"
+              @click="handleAgreeReturn(row)"
             >
               同意退款
             </el-button>
@@ -120,11 +116,25 @@
     <!-- 发货对话框 -->
     <el-dialog v-model="shipDialogVisible" title="订单发货" width="500px">
       <el-form :model="shipForm" label-width="80px">
-        <el-form-item label="物流公司">
-          <el-input v-model="shipForm.shippingCompany" placeholder="请输入物流公司名称" />
+        <el-form-item label="物流公司" required>
+          <el-select 
+            v-model="shipForm.shippingCompany" 
+            placeholder="请选择物流公司"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="company in shippingCompanies"
+              :key="company.value"
+              :label="company.label"
+              :value="company.value"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="物流单号">
-          <el-input v-model="shipForm.shippingNumber" placeholder="请输入物流单号" />
+        <el-form-item label="物流单号" required>
+          <el-input 
+            v-model="shipForm.shippingNumber" 
+            placeholder="请输入物流单号" 
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -138,8 +148,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getOrderList ,deliver,agreeReturn} from '@/api/order'
-import { ElMessage } from 'element-plus'
+import { getOrderList, deliver, agreeReturn } from '@/api/order'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
 const orderList = ref([])
@@ -147,6 +157,19 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const shipDialogVisible = ref(false)
 
+// 物流公司选项
+const shippingCompanies = ref([
+  { value: '顺丰速运', label: '顺丰速运' },
+  { value: '中通快递', label: '中通快递' },
+  { value: '圆通速递', label: '圆通速递' },
+  { value: '申通快递', label: '申通快递' },
+  { value: '韵达快递', label: '韵达快递' },
+  { value: '京东物流', label: '京东物流' },
+  { value: '邮政EMS', label: '邮政EMS' },
+  { value: '极兔速递', label: '极兔速递' },
+  { value: '德邦快递', label: '德邦快递' },
+  { value: '其他', label: '其他快递' }
+])
 
 const searchParams = ref({
   orderNo: '',
@@ -154,7 +177,7 @@ const searchParams = ref({
 })
 
 const shipForm = ref({
-  id:null,
+  id: null,
   shippingCompany: '',
   shippingNumber: ''
 })
@@ -184,12 +207,12 @@ const formatDate = (dateString) => {
 const getStatusTagType = (status) => {
   const typeMap = {
     0: 'warning', // 待支付
-    1: '',         // 待发货
-    2: 'info',     // 待收货
-    4: 'success',  // 已完成
-    5: 'danger',   // 已取消
-    6: 'warning',  // 退款中
-    7: 'info'      // 已退款
+    1: 'primary', // 待发货
+    2: 'info',    // 待收货
+    4: 'success', // 已完成
+    5: 'danger',  // 已取消
+    6: 'warning', // 退款中
+    7: 'info'     // 已退款
   }
   return typeMap[status] || ''
 }
@@ -252,25 +275,61 @@ const viewOrderDetail = (id) => {
 
 // 处理发货
 const handleShip = (order) => {
-  shipForm.value.id = order.id
+  shipForm.value = {
+    id: order.id,
+    shippingCompany: '',
+    shippingNumber: ''
+  }
   shipDialogVisible.value = true
 }
 
 // 确认发货
 const confirmShip = async () => {
-  if (!shipForm.value.shippingCompany || !shipForm.value.shippingNumber) {
-    ElMessage.warning('请填写完整的物流信息')
+  if (!shipForm.value.shippingCompany) {
+    ElMessage.warning('请选择物流公司')
+    return
+  }
+  if (!shipForm.value.shippingNumber) {
+    ElMessage.warning('请输入物流单号')
     return
   }
 
   try {
+    await ElMessageBox.confirm('确认要发货吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
     await deliver(shipForm.value)
     ElMessage.success('发货成功')
     shipDialogVisible.value = false
     fetchOrders()
   } catch (error) {
-    console.error('发货失败:', error)
-    ElMessage.error('发货失败')
+    if (error !== 'cancel') {
+      console.error('发货失败:', error)
+      ElMessage.error('发货失败')
+    }
+  }
+}
+
+// 处理同意退款
+const handleAgreeReturn = async (order) => {
+  try {
+    await ElMessageBox.confirm(`确定同意订单 ${order.orderNo} 的退款申请吗？`, '确认退款', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await agreeReturn(order.id)
+    ElMessage.success('退款处理成功')
+    fetchOrders()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('退款处理失败:', error)
+      ElMessage.error('退款处理失败')
+    }
   }
 }
 
@@ -282,12 +341,6 @@ const handleSizeChange = (val) => {
 // 分页页码改变
 const handlePageChange = () => {
   // 可以在这里添加页码改变时的逻辑
-}
-
-//处理退款
-const returnService = async (id) => {
-  await agreeReturn(id)
-  fetchOrders()
 }
 
 onMounted(() => {

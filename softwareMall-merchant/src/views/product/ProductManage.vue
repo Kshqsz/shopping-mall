@@ -26,10 +26,6 @@
           <div class="stat-value">{{ stats.onSale }}</div>
           <div class="stat-label">已上架</div>
         </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ stats.pending }}</div>
-          <div class="stat-label">审核中</div>
-        </div>
       </div>
     </div>
     

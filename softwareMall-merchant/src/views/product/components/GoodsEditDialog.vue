@@ -735,7 +735,14 @@ watch(() => props.goodsId, (newId) => {
 // 监听对话框打开状态
 watch(dialogVisible, (visible) => {
   if (visible && props.goodsId) {
+    // 打开对话框时先重置数据
+    formData.value.specs = []
+    specCombinations.value = []
     initializeFormData()
+  } else {
+    // 关闭对话框时也重置数据
+    formData.value.specs = []
+    specCombinations.value = []
   }
 })
 
