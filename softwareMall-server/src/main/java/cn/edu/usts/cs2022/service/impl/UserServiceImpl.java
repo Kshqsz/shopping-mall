@@ -9,6 +9,7 @@ import cn.edu.usts.cs2022.pojo.po.Favourite;
 import cn.edu.usts.cs2022.pojo.po.User;
 import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 import cn.edu.usts.cs2022.service.UserService;
+import cn.edu.usts.cs2022.utils.PasswordEncryptionUtil;
 import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+
+import static cn.edu.usts.cs2022.utils.PasswordEncryptionUtil.hashPassword;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +36,19 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User login(String username, String password) {
-        return userMapper.login(username, password);
+        // 根据用户名判断用户是否存在
+        User userByUserName = userMapper.getUserByUserName(username);
+        if (userByUserName == null) {
+            return null;
+        }else {
+            boolean b = PasswordEncryptionUtil.verifyPassword(password, userByUserName.getPassword());
+            if (b) {
+                return userByUserName;
+            }else {
+                return null;
+            }
+        }
+
     }
 
     @Override
@@ -45,7 +60,7 @@ public class UserServiceImpl implements UserService {
     public void register(String username, String password) {
         User user = new User();
         user.setUsername(username);
-        user.setPassword(password);
+        user.setPassword(hashPassword(password));
         user.setStatus(1);
         user.setCreateTime(LocalDateTime.now());
         user.setUpdateTime(LocalDateTime.now());
@@ -76,7 +91,7 @@ public class UserServiceImpl implements UserService {
     public void updatePassword(String newPassword) {
         Map<String, Object> map = ThreadLocalUtil.get();
         Integer userId = (Integer) map.get("userId");
-        userMapper.updatePassword(userId, newPassword);
+        userMapper.updatePassword(userId, PasswordEncryptionUtil.hashPassword(newPassword));
     }
 
     @Override

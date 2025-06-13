@@ -82,6 +82,10 @@ const getCartItemCount = async () => {
 const goToCart = () => {
   router.push('/cart')
 }
+const goToLogin = () => {
+  router.push('/login')
+}
+
 getCartItemCount()
 </script>
 
@@ -103,7 +107,6 @@ getCartItemCount()
           <span class="site-name">购物商城</span>
         </div>
       </div>
-
       <!-- 导航菜单 -->
       <div class="nav-menu">
         <div 
@@ -146,10 +149,11 @@ getCartItemCount()
         </div>
 
         <!-- 用户信息 -->
-        <div class="user-info" v-if="userStore.token">
-          <el-dropdown>
+        <!-- 用户信息或登录按钮 -->
+        <div class="user-info">
+          <el-dropdown v-if="userStore.token">
             <div class="user-dropdown">
-              <el-avatar :src="userStore.user.avatar" :size="40"></el-avatar>
+              <el-avatar :src="userStore.user?.avatar" :size="40"></el-avatar>
               <span class="username">{{ username }}</span>
               <el-icon><arrow-down /></el-icon>
             </div>
@@ -164,6 +168,15 @@ getCartItemCount()
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+          <el-button 
+            v-else 
+            type="primary" 
+            plain 
+            @click="goToLogin"
+            class="login-btn"
+          >
+            去登录
+          </el-button>
         </div>
       </div>
     </div>
@@ -349,6 +362,17 @@ getCartItemCount()
     display: none;
   }
 }
+.login-btn {
+  margin-left: 48px;
+  margin-right:40px;
+  padding: 8px 15px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
 
+.login-btn:hover {
+  background-color: #409eff;
+  color: white;
+}
 
 </style>

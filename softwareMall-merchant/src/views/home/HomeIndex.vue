@@ -1,7 +1,12 @@
 <script setup>  
 import { ref } from 'vue';  
 import { useRouter } from 'vue-router';  
-import { Document, User, DataLine, Box, } from '@element-plus/icons-vue';
+import { useMerchantStore } from '@/stores';
+import { Document, User, Box } from '@element-plus/icons-vue';
+
+// 店铺数据
+const merchantStore = useMerchantStore()
+const userInfo = ref(merchantStore.merchant);
 
 const router = useRouter();  
 const activeIndex = ref('product');  
@@ -36,12 +41,29 @@ const handleLogout = () => {
       </div>  
       <div class="title">店铺管理平台</div>  
       <div class="profile">  
-        <div class="admin-avatar" @click="showLogoutMenu = !showLogoutMenu">  
-          商家
-        </div>  
-        <div v-if="showLogoutMenu" class="logout-menu">  
-          <button @click="handleLogout" style="width: 70px;">退出登录</button>  
-        </div>  
+        <el-dropdown trigger="click" @visible-change="showLogoutMenu = $event">
+          <div class="admin-info">
+            <el-avatar 
+              :size="40" 
+              :src="userInfo.avatar" 
+              class="header-avatar"
+            />
+            <span class="username">{{ userInfo.username }}</span>
+            <el-icon class="arrow-icon">
+              <arrow-down />
+            </el-icon>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="navigateTo('/home/merchant')">
+                <el-icon><User /></el-icon>店铺信息
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="handleLogout">
+                <el-icon><SwitchButton /></el-icon>退出登录
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>  
     </header>  
     <el-row class="row">  
@@ -54,10 +76,6 @@ const handleLogout = () => {
           text-color="#545c64"  
           active-text-color="#409EFF"  
         >  
-        <el-menu-item index="count" @click="navigateTo('/home/count')">  
-            <el-icon><DataLine/></el-icon>
-            数据统计  
-          </el-menu-item>
           <el-menu-item index="product" @click="navigateTo('/home/product')">  
             <el-icon><Box/></el-icon>
             软件产品管理  
@@ -68,7 +86,7 @@ const handleLogout = () => {
           </el-menu-item>  
           <el-menu-item index="merchant" @click="navigateTo('/home/merchant')">  
             <el-icon><User/></el-icon>
-            个人信息  
+            店铺信息  
           </el-menu-item>  
         </el-menu>  
       </el-col>  
@@ -81,7 +99,7 @@ const handleLogout = () => {
   </div>  
 </template>  
 
-<style scoped>  
+<style scoped lang="scss">
 .home-container {  
   height: 98vh;  
 }  
@@ -94,6 +112,7 @@ const handleLogout = () => {
   color: #fff;  
   padding: 0 20px;  
   height: 60px;  
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }  
 
 .logo {  
@@ -113,29 +132,46 @@ const handleLogout = () => {
   position: relative;  
 }  
 
-.admin-avatar {  
-  background-color: #fff;  
-  color: #409eff;  
-  padding: 8px 16px;  
-  border-radius: 50%;  
-  cursor: pointer;  
-}  
+.admin-info {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 20px;
+  transition: all 0.3s;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
 
-.logout-menu {  
-  position: absolute;  
-  top: 50px;  
-  right: 0;  
-  background-color: #fff;  
-  border: 1px solid #eaeaea;  
-  padding: 10px 20px;  
-  z-index: 1;  
-}  
+.header-avatar {
+  margin-right: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.3s;
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+}
 
-.logout-menu button {  
-  border: none;  
-  background-color: transparent;  
-  cursor: pointer;  
-}  
+.username {
+  margin-right: 8px;
+  font-size: 14px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow-icon {
+  transition: transform 0.3s;
+  
+  .el-dropdown.is-active & {
+    transform: rotate(180deg);
+  }
+}
 
 .row {  
   height: calc(100% - 60px);  
@@ -159,5 +195,20 @@ const handleLogout = () => {
 
 .content {  
   min-height: 100%;  
-}  
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .username {
+    display: none;
+  }
+  
+  .header {
+    padding: 0 10px;
+  }
+  
+  .title {
+    font-size: 16px;
+  }
+}
 </style>

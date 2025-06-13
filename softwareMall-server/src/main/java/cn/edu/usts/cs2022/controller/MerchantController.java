@@ -1,11 +1,15 @@
 package cn.edu.usts.cs2022.controller;
 
+import cn.edu.usts.cs2022.mapper.MerchantMapper;
 import cn.edu.usts.cs2022.pojo.dto.*;
 import cn.edu.usts.cs2022.pojo.po.Merchant;
 import cn.edu.usts.cs2022.pojo.po.Result;
+import cn.edu.usts.cs2022.pojo.po.User;
 import cn.edu.usts.cs2022.pojo.vo.MerchantVo;
 import cn.edu.usts.cs2022.service.MerchantService;
 import cn.edu.usts.cs2022.utils.JwtUtil;
+import cn.edu.usts.cs2022.utils.PasswordEncryptionUtil;
+import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +23,7 @@ import java.util.Map;
 public class MerchantController {
 
     private final MerchantService merchantService;
+    private final MerchantMapper merchantMapper;
 
     /**
      * 商家登录
@@ -103,9 +108,16 @@ public class MerchantController {
     }
 
     @PostMapping("/updatePassword")
-    public Result updatePassword(@RequestBody UpdatePasswordDTO updatePasswordDTO) {
-        String newPassword = updatePasswordDTO.getPassword();
-        String reNewPassword = updatePasswordDTO.getRePassword();
+    public Result updatePassword(@RequestBody ChangePasswordDto changePasswordDto) {
+        String oldPassword = changePasswordDto.getOldPassword();
+        String newPassword = changePasswordDto.getNewPassword();
+        String reNewPassword = changePasswordDto.getConfirmPassword();
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("merchantId");
+        Merchant merchant = merchantMapper.getById(userId);
+        if(!PasswordEncryptionUtil.verifyPassword(oldPassword,merchant.getPassword())){
+            return Result.error("旧密码错误");
+        }
         if (!newPassword.equals(reNewPassword)) {
             return Result.error("两次密码不一致!");
         }

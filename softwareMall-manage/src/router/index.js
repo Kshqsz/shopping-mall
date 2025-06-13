@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import login from '../views/LoginIndex.vue'
-import Audit from '../views/ProductAudit.vue'
 import Product from '../views/ProductManage.vue'
 import Merchant from '../views/MerchantManger.vue'
 import User from '../views/UserManager.vue'
@@ -17,7 +16,6 @@ const routes = [
     component: Home,  
     redirect: '/home/count',
     children: [  
-      { path: 'audit', component: Audit },  
       { path: 'product', component: Product },  
       { path: 'merchant', component: Merchant },  
       { path: 'user', component: User },

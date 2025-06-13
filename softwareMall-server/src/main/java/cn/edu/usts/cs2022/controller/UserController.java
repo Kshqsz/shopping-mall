@@ -8,6 +8,8 @@ import cn.edu.usts.cs2022.pojo.po.User;
 import cn.edu.usts.cs2022.pojo.vo.client.AddressVo;
 import cn.edu.usts.cs2022.service.UserService;
 import cn.edu.usts.cs2022.utils.JwtUtil;
+import cn.edu.usts.cs2022.utils.PasswordEncryptionUtil;
+import cn.edu.usts.cs2022.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -94,9 +96,16 @@ public class UserController {
     }
 
     @PostMapping("/updatePassword")
-    public Result updatePassword(@RequestBody UpdatePasswordDTO updatePasswordDTO) {
-        String newPassword = updatePasswordDTO.getPassword();
-        String reNewPassword = updatePasswordDTO.getRePassword();
+    public Result updatePassword(@RequestBody ChangePasswordDto changePasswordDto) {
+        String oldPassword = changePasswordDto.getOldPassword();
+        String newPassword = changePasswordDto.getNewPassword();
+        String reNewPassword = changePasswordDto.getConfirmPassword();
+        Map<String, Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("userId");
+        User user = userMapper.getById(userId);
+        if(!PasswordEncryptionUtil.verifyPassword(oldPassword,user.getPassword())){
+            return Result.error("旧密码错误");
+        }
         if (!newPassword.equals(reNewPassword)) {
             return Result.error("两次密码不一致!");
         }
@@ -131,7 +140,6 @@ public class UserController {
     //删除地址
     @DeleteMapping("/address")
     public Result deleteAddress(@RequestParam Integer id){
-        System.out.println(id);
         userMapper.deleteAddress(id);
         return Result.success();
     }
@@ -144,7 +152,6 @@ public class UserController {
     // 地址修改
     @PostMapping("/updateAddress")
     public Result updateAddress(@RequestBody AddressDto addressDto){
-        System.out.println(addressDto.toString());
         userService.updateAddress(addressDto);
         return Result.success();
     }

@@ -15,8 +15,7 @@ const navigateTo = (path) => {
 
 const handleSelect = (index) => {  
   activeIndex.value = index;  
-  const routes = {  
-    audit: '/home/audit',  
+  const routes = {   
     product: '/home/product',  
     merchant: '/home/merchant',  
     user: '/home/user',  
@@ -64,9 +63,6 @@ const handleLogout = () => {
         >
         <el-menu-item index="count" @click="navigateTo('/home/count')">
             <el-icon><DataLine /></el-icon>数据统计
-          </el-menu-item>
-          <el-menu-item index="audit" @click="navigateTo('/home/audit')">
-            <el-icon><Edit /></el-icon>软件上架审核
           </el-menu-item>
           <el-menu-item index="product" @click="navigateTo('/home/product')">
             <el-icon><Box /></el-icon>软件产品管理

@@ -14,12 +14,9 @@ export const userGetFavoriteService = (userId) => {
     return request.get(`/user/myFavorite/${userId}`)
 }
 
-export const userCountFavouriteService = (userId) => {
-    return request.get(`/user/countFavourite/${userId}`)
-}
 
-export const userUpdatePasswordService = ({password, rePassword}) => {
-    return request.post("/user/updatePassword", {password, rePassword})
+export const updatePassword = (passwordDto) => {
+    return request.post("/user/updatePassword", passwordDto)
 }
 
 export const userUpdateService = ({id, avatar, username, phone}) => {

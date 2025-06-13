@@ -1,13 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import { useUserStore } from '@/stores';
-import { userCountFavouriteService, userUpdatePasswordService, userUpdateService,
+import {  updatePassword, userUpdateService,
          userGetByIdService} from '@/api/user'
-import { Tickets, Edit, Checked} from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router';
 
-import {userCountOrderService} from '@/api/user'
-
+const router = useRouter();
 const userStore = useUserStore()
 const editDialogVisible = ref(false) // 控制修改个人信息对话框
 const changePasswordDialogVisible = ref(false) // 控制修改密码对话框
@@ -62,7 +60,7 @@ const closeChangePasswordDialog = () => {
   changePasswordForm.value = {
     oldPassword: '',
     newPassword: '',
-    rePassword: ''
+    confirmPassword: ''
   }
   changePasswordDialogVisible.value = false
 }
@@ -71,7 +69,7 @@ const closeChangePasswordDialog = () => {
 const changePasswordForm = ref({
   oldPassword: '',
   newPassword: '',
-  rePassword: ''
+  confirmPassword: ''
 })
 const changePasswordRules = {
   oldPassword: [
@@ -86,92 +84,20 @@ const changePasswordRules = {
   ]
 }
 
-const handleChangePassword = async () => {
-  // 这里可以调用修改密码的API接口
-  const passwordDTO = {
-    password: changePasswordForm.value.newPassword,
-    rePassword: changePasswordForm.value.rePassword
-  };
-  await userUpdatePasswordService(passwordDTO);
-  await getUser();
-  ElMessage.success('密码修改成功~')
-  changePasswordForm.value = {
-    oldPassword: '',
-    newPassword: '',
-    rePassword: ''
+const handleSubmitChangePassword = async () =>{
+  const res = await updatePassword(changePasswordForm.value)
+  if(res.data.code === 0){
+    ElMessage.success('修改成功，请重新登录')
+    changePasswordDialogVisible.value = false
+    userStore.removeToken();
+    userStore.removeUsername();
+    router.push('/login')
+  }else{
+    ElMessage.error(res.data.data)
   }
-  closeChangePasswordDialog()
 }
 
-const handleSubmitChangePassword = () => {
-    // 校验旧密码是否正确
-  if (changePasswordForm.value.oldPassword !== userInfo.value.password) {
-    ElMessage.error('旧密码不正确');
-    return; // 如果旧密码不正确，直接返回
-  }
-  // 表单校验
-  const form = changePasswordFormRef.value
-  form.validate((valid) => {
-    if (valid) {
-      handleChangePassword()
-    } else {
-      ElMessage.error('请填写正确的密码信息')
-    }
-  })
-}
 
-const stats = ref([
-  { label: '我的订单', count: 0, path: '/orders' },
-  { label: '待支付的订单', count: 0, path: '/orders' }, 
-  { label: '喜欢的商品', count: 1, path: '/favorites' },
-  { label: '已完成的订单', count: 0, path: '/orders' }, 
-])
-onMounted( async () => {
-  await countFavourite();
-  await countOrder();
-})
-const countOrder = async () =>{
-  const userId = userInfo.value.id;
-  const res_cancel = await userCountOrderService(
-    {
-      userId: userId,
-      status: -1
-    }
-  );
-  const res_ready = await userCountOrderService(
-    {
-      userId: userId,
-      status: 0
-    }
-  );
-  const res_finish= await userCountOrderService(
-    {
-      userId: userId,
-      status: 1
-    }
-  );
-  const cancel = res_cancel.data.data;
-  const ready = res_ready.data.data;
-  const finish = res_finish.data.data;
-  const all = cancel + ready + finish; 
-  stats.value[0].count = all;
-  stats.value[1].count = ready;
-  stats.value[3].count = finish;
-}
-const countFavourite = async () => {
-  const userId = userInfo.value.id;
-  const res = await userCountFavouriteService(userId);
-  stats.value[2].count = res.data.data;
-}
-const router = useRouter()
-// 获取统计项颜色
-const getStatColor = (index) => {
-  const colors = ['#FF7F00', '#409EFF', '#FF0000', '#67C23A']
-  return colors[index % colors.length]
-}
-const goToDetail = (stat) => {
-  router.push(stat.path)
-}
 </script>
 
 <template>
@@ -197,29 +123,7 @@ const goToDetail = (stat) => {
 
     <hr style="margin-top: 40px; opacity: 0.4">
     
-    <!-- 数据统计 -->
-    <div class="stats">
-      <div
-        v-for="(stat, index) in stats"
-        :key="index"
-        class="stat-item"
-        @click="goToDetail(stat)"
-      >
-        <el-card class="stat-icon" shadow = "never":style="{ backgroundColor: stat.color || getStatColor(index) }" >
-          <el-icon> 
-            <Tickets v-if="index==0"></Tickets>
-            <Edit v-if="index==1"></Edit>
-            <Checked v-if="index==3"></Checked>
-          </el-icon> 
-          <i :class="'far fa-heart'" v-if="index===2" style="padding-bottom: 30px;"></i>
-        </el-card>
-        <div class="stat-info">
-          <h3>{{ stat.label }}</h3>
-          <p>{{ stat.count }}</p>
-          <a href="#" class="stat-link">查看{{ stat.label }}</a>
-        </div>
-      </div>
-    </div>
+    
         <!-- 修改个人信息对话框 -->
       <el-dialog
       v-model="editDialogVisible"
@@ -277,7 +181,7 @@ const goToDetail = (stat) => {
           <el-input type="password" v-model="changePasswordForm.newPassword" placeholder="请输入新密码"></el-input>
         </el-form-item>
         <el-form-item label="确认密码" prop="rePassword">
-          <el-input type="password" v-model="changePasswordForm.rePassword" placeholder="请再次输入新密码"></el-input>
+          <el-input type="password" v-model="changePasswordForm.confirmPassword" placeholder="请再次输入新密码"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -315,6 +219,7 @@ const goToDetail = (stat) => {
   height: 100px;
   border-radius: 50%;
   margin-right: 20px;
+  object-fit: cover;   /* 保持比例填充 */
 }
 
 .user-info h2 {

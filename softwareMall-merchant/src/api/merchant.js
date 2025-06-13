@@ -9,8 +9,8 @@ export const merchantLoginService = ({ username, password }) => {
 export const merchantRegisterService = ({ username, password, rePassword }) => {
     return request.post("/merchant/register", { username, password, rePassword });
 }
-export const  merchantUpdatePasswordService = ({password, rePassword}) => {
-    return request.post("/merchant/updatePassword", {password, rePassword})
+export const  merchantUpdatePasswordService = (passwordDto) => {
+    return request.post("/merchant/updatePassword", passwordDto)
 }
 export const merchantUpdateService = ({id, avatar, username, phone}) => {
     return request.put("/merchant/update", {id, avatar, username, phone})
