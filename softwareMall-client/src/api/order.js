@@ -34,3 +34,8 @@ export const receive = (id) => {
 export const returnService = (id) => {
     return request.put(`/order/returnRequest/${id}`)
 }
+
+//同意退款
+export const agreeReturn = (id) => {
+  return request.put(`/order/agreeReturn/${id}`)
+}

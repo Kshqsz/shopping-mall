@@ -43,4 +43,8 @@ public class Order {
     private LocalDateTime cancelTime;              // 取消时间
     private LocalDateTime refundTime;              // 退款时间
     private LocalDateTime updateTime;              // 最后更新时间
+
+    private LocalDateTime autoCancelTime;       // 自动取消订单时间
+    private LocalDateTime autoConfirmTime;
+    private LocalDateTime autoRefundTime;
 }

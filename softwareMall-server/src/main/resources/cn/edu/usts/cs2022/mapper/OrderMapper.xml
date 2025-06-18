@@ -29,7 +29,8 @@
             update_time,
             spec_id,
             merchant_id,
-            shop_name
+            shop_name,
+            auto_cancel_time
         ) VALUES (
                      #{orderNo},
                      #{userId},
@@ -52,7 +53,8 @@
                      NOW(),  -- 更新时间
                      #{specId},
                      #{merchantId},
-                     #{shopName}
+                     #{shopName},
+                     #{autoCancelTime}
                  )
     </insert>
 

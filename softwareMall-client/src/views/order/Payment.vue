@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref,computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { orderCancelService, orderPayService ,getOrderById} from '@/api/order'
 import { codeToText } from 'element-china-area-data'
@@ -83,8 +83,65 @@ const formatAddress = (order) => {
 const viewOrderDetails = (id) => {
   router.push(`/orderDetail/${id}`)
 }
+
+// 倒计时相关代码
+const remainingTime = ref(0) // 剩余秒数
+let timer = null
+
+// 计算剩余秒数（30分钟倒计时）
+const calculateRemainingTime = () => {
+  if (order.value.status !== 0) return 0
+  
+  const now = new Date()
+  const createdAt = new Date(order.value.createTime)
+  const elapsedSeconds = Math.floor((now - createdAt) / 1000)
+  const remaining = 300 - elapsedSeconds // 30分钟=1800秒
+  
+  return Math.max(0, remaining)
+}
+
+// 格式化时间为 MM:SS
+const formattedTime = computed(() => {
+  const minutes = Math.floor(remainingTime.value / 60)
+  const seconds = remainingTime.value % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
+
+// 开始倒计时（每秒更新一次）
+const startCountdown = () => {
+  remainingTime.value = calculateRemainingTime()
+  
+  timer = setInterval(() => {
+    remainingTime.value -= 1
+    
+    if (remainingTime.value <= 0) {
+      clearInterval(timer)
+      onCountdownEnd()
+    }
+  }, 1000) // 每秒更新一次
+}
+
+// 倒计时结束后执行的方法
+const onCountdownEnd = async () => {
+  try {
+    // 1. 调用取消订单API
+    await orderCancelService(order.value.id)
+    // 2. 刷新订单状态
+    order.value = (await getOrderById(orderId.value.id)).data.data;
+    
+  } catch (error) {
+    console.error('自动取消订单失败:', error)
+    // 如果取消失败（比如订单已支付），刷新状态
+    order.value = (await getOrderById(orderId.value.id)).data.data;
+  }
+}
+
+
 onMounted(async () => {
   order.value = (await getOrderById(orderId.value.id)).data.data;
+  if (order.value.status === 0) {
+    startCountdown()
+  }
 });
 </script>
 
@@ -101,10 +158,30 @@ onMounted(async () => {
       <div class="order-header">
         <div class="status-info">
           订单状态: 
-          <el-tag :type="order.status === 0 ? 'warning' : 'success'">
-            {{ order.status === 0 ? '待支付' : '已支付' }}
-          </el-tag>
+          <el-tag 
+              :type="{
+                0: 'warning',
+                1: 'success',
+                5: 'danger'
+              }[order.status]"
+            >
+              {{
+                {
+                  0: '待支付',
+                  1: '已支付',
+                  2: '已发货',
+                  4: '已完成',
+                  5: '已取消'
+                }[order.status] || '未知状态'
+              }}
+            </el-tag>
         </div>
+        <!-- 添加倒计时显示 -->
+          <!-- 精确到秒的倒计时显示 -->
+          <div v-if="order.status === 0" class="countdown-text">
+            <span v-if="remainingTime > 0">订单将在 {{ formattedTime }} 后自动取消</span>
+            <span v-else class="expired-text">订单已超时，即将自动取消</span>
+          </div>
         <div class="create-time">
           创建时间: {{ formatDate(order.createTime) }}
         </div>
@@ -427,5 +504,8 @@ onMounted(async () => {
 
 .dialog-actions .el-button {
   width: 120px;
+}
+.countdown-text {
+  color: #ca2323;
 }
 </style>

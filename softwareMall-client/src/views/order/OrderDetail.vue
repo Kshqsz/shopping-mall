@@ -16,6 +16,23 @@
         <div class="status-text">
           <h3>{{ orderStatusText }}</h3>
           <p class="status-desc">{{ statusDesc }}</p>
+          <!-- 待付款倒计时 -->
+          <div v-if="order.status === 0" class="countdown-text payment-countdown">
+            <span v-if="remainingPaymentTime > 0">订单将在 {{ formattedPaymentTime }} 后自动取消</span>
+            <span v-else class="expired-text">订单已超时，即将自动取消</span>
+          </div>
+          
+          <!-- 待收货倒计时 -->
+          <div v-if="order.status === 2" class="countdown-text confirm-countdown">
+            <span v-if="remainingConfirmTime > 0">将在 {{ formattedConfirmTime }} 后自动确认收货</span>
+            <span v-else class="expired-text">已超时，即将自动确认收货</span>
+          </div>
+          
+          <!-- 退款处理倒计时 -->
+          <div v-if="order.status === 6" class="countdown-text refund-countdown">
+            <span v-if="remainingRefundTime > 0">商家需在 {{ formattedRefundTime }} 内处理退款,超时将自动退款</span>
+            <span v-else class="expired-text">商家处理超时，系统将自动退款</span>
+          </div>
         </div>
       </div>
     </el-card>
@@ -40,22 +57,22 @@
     </el-card>
 
     <!-- 物流信息 -->
-<el-card class="info-card">
-  <el-descriptions title="物流信息" :column="2" border>
-    <el-descriptions-item label="物流状态">
-      <el-tag :type="logisticsStatusType">{{ logisticsStatusText }}</el-tag>
-    </el-descriptions-item>
-    <el-descriptions-item label="物流公司" v-if="order.shippingCompany">
-      {{ order.shippingCompany }}
-    </el-descriptions-item>
-    <el-descriptions-item label="物流单号" v-if="order.shippingNumber">
-      {{ order.shippingNumber }}
-    </el-descriptions-item>
-    <el-descriptions-item label="发货时间" v-if="order.shippingTime">
-      {{ formatDate(order.shippingTime) }}
-    </el-descriptions-item>
-  </el-descriptions>
-</el-card>
+    <el-card class="info-card">
+      <el-descriptions title="物流信息" :column="2" border>
+        <el-descriptions-item label="物流状态">
+          <el-tag :type="logisticsStatusType">{{ logisticsStatusText }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="物流公司" v-if="order.shippingCompany">
+          {{ order.shippingCompany }}
+        </el-descriptions-item>
+        <el-descriptions-item label="物流单号" v-if="order.shippingNumber">
+          {{ order.shippingNumber }}
+        </el-descriptions-item>
+        <el-descriptions-item label="发货时间" v-if="order.shippingTime">
+          {{ formatDate(order.shippingTime) }}
+        </el-descriptions-item>
+      </el-descriptions>
+    </el-card>
 
     <!-- 商品信息 -->
     <el-card class="info-card" @click="detail(order.productId)">
@@ -153,7 +170,7 @@ import {
   Goods,
   Warning
 } from '@element-plus/icons-vue'
-import { getOrderById ,receive,orderCancelService,returnService} from '@/api/order'
+import { getOrderById ,receive,orderCancelService,returnService,agreeReturn} from '@/api/order'
 import { codeToText } from 'element-china-area-data';
 
 
@@ -279,6 +296,14 @@ const formatDate = (dateString) => {
 const fetchOrderDetail = async (id) => {
   const res = await (await getOrderById(id)).data.data
   order.value = res
+  // 根据订单状态启动不同的倒计时
+  if (order.value.status === 0) {
+    startPaymentCountdown()
+  } else if (order.value.status === 2) {
+    startConfirmCountdown()
+  } else if (order.value.status === 6) {
+    startRefundCountdown()
+  }
 }
 
 const handleCancelOrder = () => {
@@ -345,6 +370,146 @@ const handleReturnGoods = async () =>{
     }
   }
   
+}
+
+// 倒计时相关代码
+const remainingPaymentTime = ref(0)    // 待付款倒计时（5分钟）
+const remainingConfirmTime = ref(0)    // 自动确认收货倒计时（10天）
+const remainingRefundTime = ref(0)     // 自动退款倒计时（5天）
+let paymentTimer = null
+let confirmTimer = null
+let refundTimer = null
+
+
+// 计算剩余秒数（5分钟倒计时）
+const calculatePaymentRemainingTime = () => {
+  if (order.value.status !== 0) return 0
+  const now = new Date()
+  const createdAt = new Date(order.value.createTime)
+  const elapsedSeconds = Math.floor((now - createdAt) / 1000)
+  return Math.max(0, 300 - elapsedSeconds) // 5分钟=300秒
+}
+
+// 计算剩余秒数（10天自动确认收货）
+const calculateConfirmRemainingTime = () => {
+  if (order.value.status !== 2 || !order.value.shippingTime) return 0
+  const now = new Date()
+  const shippedAt = new Date(order.value.shippingTime)
+  const elapsedSeconds = Math.floor((now - shippedAt) / 1000)
+  return Math.max(0, 864000 - elapsedSeconds) // 10天=864000秒
+}
+
+// 计算剩余秒数（5天自动退款）
+const calculateRefundRemainingTime = () => {
+  if (order.value.status !== 6 || !order.value.refundTime) return 0
+  const now = new Date()
+  const refundAt = new Date(order.value.refundTime)
+  const elapsedSeconds = Math.floor((now - refundAt) / 1000)
+  return Math.max(0, 432000 - elapsedSeconds) // 5天=432000秒
+}
+
+// 格式化支付时间为 MM:SS
+const formattedPaymentTime = computed(() => {
+  const minutes = Math.floor(remainingPaymentTime.value / 60)
+  const seconds = remainingPaymentTime.value % 60
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
+
+// 格式化确认收货时间为 X天XX小时
+const formattedConfirmTime = computed(() => {
+  const totalHours = Math.floor(remainingConfirmTime.value / 3600)
+  const days = Math.floor(totalHours / 24)
+  const hours = totalHours % 24
+  return days > 0 ? `${days}天${hours}小时` : `${hours}小时`
+})
+
+// 格式化退款时间为 X天XX小时
+const formattedRefundTime = computed(() => {
+  const totalHours = Math.floor(remainingRefundTime.value / 3600)
+  const days = Math.floor(totalHours / 24)
+  const hours = totalHours % 24
+  return days > 0 ? `${days}天${hours}小时` : `${hours}小时`
+})
+
+// 启动待付款倒计时
+const startPaymentCountdown = () => {
+  remainingPaymentTime.value = calculatePaymentRemainingTime()
+  if (remainingPaymentTime.value <= 0) {
+    onPaymentCountdownEnd()
+    return
+  }
+  paymentTimer = setInterval(() => {
+    remainingPaymentTime.value -= 1
+    if (remainingPaymentTime.value <= 0) {
+      clearInterval(paymentTimer)
+      onPaymentCountdownEnd()
+    }
+  }, 1000)
+}
+
+// 启动确认收货倒计时
+const startConfirmCountdown = () => {
+  remainingConfirmTime.value = calculateConfirmRemainingTime()
+  if (remainingConfirmTime.value <= 0) {
+    onConfirmCountdownEnd()
+    return
+  }
+  confirmTimer = setInterval(() => {
+    remainingConfirmTime.value -= 1
+    if (remainingConfirmTime.value <= 0) {
+      clearInterval(confirmTimer)
+      onConfirmCountdownEnd()
+    }
+  }, 1000)
+}
+
+// 启动退款倒计时
+const startRefundCountdown = () => {
+  remainingRefundTime.value = calculateRefundRemainingTime()
+  if (remainingRefundTime.value <= 0) {
+    onRefundCountdownEnd()
+    return
+  }
+  refundTimer = setInterval(() => {
+    remainingRefundTime.value -= 1
+    if (remainingRefundTime.value <= 0) {
+      clearInterval(refundTimer)
+      onRefundCountdownEnd()
+    }
+  }, 1000)
+}
+
+// 待付款倒计时结束处理
+const onPaymentCountdownEnd = async () => {
+  try {
+    await orderCancelService(order.value.id)
+    await fetchOrderDetail(route.params.id)
+  } catch (error) {
+    console.error('自动取消订单失败:', error)
+    await fetchOrderDetail(route.params.id)
+  }
+}
+
+// 确认收货倒计时结束处理
+const onConfirmCountdownEnd = async () => {
+  try {
+    await receive(order.value.id)
+    await fetchOrderDetail(route.params.id)
+  } catch (error) {
+    console.error('自动确认收货失败:', error)
+    await fetchOrderDetail(route.params.id)
+  }
+}
+
+// 退款倒计时结束处理
+const onRefundCountdownEnd = async () => {
+  try {
+    await agreeReturn(order.value.id)
+    await fetchOrderDetail(route.params.id)
+  } catch (error) {
+    console.error('自动退款失败:', error)
+    await fetchOrderDetail(route.params.id)
+  }
 }
 
 onMounted(() => {
@@ -484,4 +649,37 @@ onMounted(() => {
 .action-buttons .el-button {
   margin-left: 10px;
 }
+/* 倒计时样式 */
+.countdown-text {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.countdown-text .el-icon {
+  margin-right: 5px;
+}
+
+/* 支付倒计时样式 */
+.payment-countdown .el-icon {
+  color: #ff9900; /* 橙色 */
+}
+
+/* 确认收货倒计时样式 */
+.confirm-countdown .el-icon {
+  color: #67c23a; /* 绿色 */
+}
+
+/* 退款倒计时样式 */
+.refund-countdown .el-icon {
+  color: #e6a23c; /* 黄色 */
+}
+
+/* 过期文本样式 */
+.expired-text {
+  color: #f56c6c; /* 红色 */
+  font-weight: bold;
+}
+
 </style>

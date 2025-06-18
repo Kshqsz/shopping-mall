@@ -78,6 +78,9 @@ public class OrderServiceImpl implements OrderService {
         order.setMerchantId(merchantId);
         order.setShopName(merchant.getShopName());
         order.setCreateTime(LocalDateTime.now());
+        //自动取消时间
+        LocalDateTime thirtyMinutesLater = LocalDateTime.now().plusMinutes(5);
+        order.setAutoCancelTime(thirtyMinutesLater);
         orderMapper.add(order);
         return order;
     }
@@ -162,5 +165,8 @@ public class OrderServiceImpl implements OrderService {
         //订单状态为已退款
         orderMapper.toReturnStatus(id,7);
     }
+
+
+
 
 }
