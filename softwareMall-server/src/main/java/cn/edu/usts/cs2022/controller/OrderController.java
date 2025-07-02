@@ -101,6 +101,7 @@ public class OrderController {
     //处理退货
     @PutMapping("/returnRequest/{id}")
     public Result returnRequest(@PathVariable Integer id) {
+        System.out.println("执行处理退货方法");
         orderService.toReturnStatus(id);
         return Result.success();
     }

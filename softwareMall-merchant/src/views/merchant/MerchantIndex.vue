@@ -14,9 +14,9 @@ const showChangePasswordDialog = ref(false);
 
 // 统计信息数据（模拟）
 const stats = ref({
-  todayOrders: 42,
-  monthlySales: 12800,
-  productCount: 56,
+  todayOrders: 18,
+  monthlySales: 42800,
+  productCount: 11,
   customerRating: 4.8
 });
 
@@ -103,7 +103,6 @@ onMounted(() => {
               <h2>{{ userInfo.username }}</h2>
               <div class="contact-info">
                 <span><i class="el-icon-phone"></i> {{ userInfo.phone }}</span>
-                <span><i class="el-icon-date"></i> 注册时间: 2023-01-15</span>
               </div>
               <div class="actions">
                 <el-button type="primary" @click="showEditDialog = true" size="small">
@@ -123,7 +122,7 @@ onMounted(() => {
     <el-row :gutter="20" class="mb-20">
       <el-col :xs="24" :sm="12" :md="6" v-for="(stat, index) in [
         { title: '今日订单', value: stats.todayOrders, icon: 'el-icon-s-order', color: '#409EFF' },
-        { title: '本月销售额', value: `¥${stats.monthlySales}`, icon: 'el-icon-money', color: '#67C23A' },
+        { title: '销售额', value: `¥${stats.monthlySales}`, icon: 'el-icon-money', color: '#67C23A' },
         { title: '商品数量', value: stats.productCount, icon: 'el-icon-goods', color: '#E6A23C' },
         { title: '顾客评分', value: stats.customerRating, icon: 'el-icon-star-on', color: '#F56C6C' }
       ]" :key="index">
@@ -141,41 +140,7 @@ onMounted(() => {
       </el-col>
     </el-row>
 
-    <!-- 销售趋势和热门商品 -->
-    <el-row :gutter="20">
-      <el-col :xs="24" :md="16" class="mb-20">
-        <el-card>
-          <template #header>
-            <span>近6个月销售趋势</span>
-          </template>
-          <div class="chart-container">
-            <!-- 这里可以使用echarts或其它图表库 -->
-            <div class="mock-chart">
-              <div 
-                v-for="item in salesTrend" 
-                :key="item.month" 
-                class="chart-bar"
-                :style="{ height: `${item.sales / 150}px` }"
-                :title="`${item.month}: ¥${item.sales}`"
-              >
-                <span class="chart-label">{{ item.month }}</span>
-              </div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :md="8" class="mb-20">
-        <el-card>
-          <template #header>
-            <span>热门商品</span>
-          </template>
-          <el-table :data="popularProducts" style="width: 100%" height="250">
-            <el-table-column prop="name" label="商品名称" />
-            <el-table-column prop="sales" label="销量" width="80" />
-          </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
+   
 
     <!-- 编辑信息对话框 -->
     <el-dialog v-model="showEditDialog" title="编辑店铺信息" width="600px">  
@@ -207,9 +172,6 @@ onMounted(() => {
 <!-- 编辑信息对话框 -->
 <el-dialog v-model="showEditDialog" title="编辑店铺信息" width="600px">  
   <el-form :model="editedUserInfo" label-width="100px">  
-    <el-form-item label="店铺名称">  
-      <el-input v-model="editedUserInfo.username" />  
-    </el-form-item>  
     <el-form-item label="联系电话">  
       <el-input v-model="editedUserInfo.phone" />  
     </el-form-item>  

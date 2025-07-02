@@ -505,6 +505,7 @@ const onConfirmCountdownEnd = async () => {
 const onRefundCountdownEnd = async () => {
   try {
     await agreeReturn(order.value.id)
+    console.log(order.value.id)
     await fetchOrderDetail(route.params.id)
   } catch (error) {
     console.error('自动退款失败:', error)

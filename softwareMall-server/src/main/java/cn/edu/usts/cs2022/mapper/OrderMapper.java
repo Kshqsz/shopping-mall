@@ -54,7 +54,7 @@ public interface OrderMapper {
     @Update("update orders set complete_time = NOW(),status=4 where id = #{id} and status = 2")
     void receive(Integer id);
 
-    @Update("update orders set status = #{status},refund_time = NOW() ,auto_refund_time = (NOW() + INTERVAL 5 DAY) where id = #{id} and status = 2")
+    @Update("update orders set status = #{status},refund_time = NOW() ,auto_refund_time = (NOW() + INTERVAL 5 DAY) where id = #{id}")
     void toReturnStatus(@Param("id") Integer id, @Param("status") Integer status);
 
     @Select("select * from orders where product_id = #{productId} and status in (0,1,2,6)")

@@ -137,6 +137,7 @@ public class OrderServiceImpl implements OrderService {
         //若已支付但未发货，则直接退款
         Order order = orderMapper.getById(id);
         if (order.getStatus() == 1) {
+            System.out.println("直接退款");
             //库存复原
             Integer quantity = order.getQuantity();
             Integer specId = order.getSpecId();
@@ -144,8 +145,11 @@ public class OrderServiceImpl implements OrderService {
             specMapper.updateStock(specId,quantity+stock);
             //订单状态为已退款
             orderMapper.toReturnStatus(id,7);
+            System.out.println(id);
+            System.out.println("退款成功");
         }
         else {
+            System.out.println("商家同意后退款");
             //若已经发货，则需要商家收到货物同意才能退款等待商家处理
             orderMapper.toReturnStatus(id,6);
         }
